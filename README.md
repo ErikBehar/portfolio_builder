@@ -65,7 +65,11 @@ portfolio_website/
 ├── public/
 │   └── uploads/               # User-uploaded images and videos
 ├── scripts/
-│   └── clean.mjs              # Remove build artifacts (used by npm run clean)
+│   ├── clean.mjs              # Remove build artifacts (npm run clean)
+│   └── railway-start.mjs      # Railway/Docker production startup
+├── Dockerfile                 # Production image for Railway
+├── railway.toml               # Railway build/deploy config
+├── RAILWAY.md                 # Railway deployment guide
 ├── src/
 │   ├── app/
 │   │   ├── layout.tsx         # Root layout (header, footer, metadata)
@@ -202,4 +206,8 @@ npm run build
 npm run start
 ```
 
-See **[DEPLOY.md](./DEPLOY.md)** for full production deployment instructions.
+**Railway (GitHub deploy)**
+
+See **[RAILWAY.md](./RAILWAY.md)** for step-by-step setup: connect repo, add a `/data` volume, set `ADMIN_SECRET`, deploy.
+
+See **[DEPLOY.md](./DEPLOY.md)** for VPS deployment and the full security checklist.

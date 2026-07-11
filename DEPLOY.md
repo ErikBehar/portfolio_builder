@@ -145,6 +145,17 @@ Always run `prisma migrate deploy` before restarting if the schema has changed.
 
 ## Platform-specific notes
 
+### Railway (recommended for GitHub deploy)
+
+**Best fit for connect-repo-and-deploy** with persistent SQLite and uploads.
+
+See **[RAILWAY.md](./RAILWAY.md)** for the full guide. Summary:
+
+1. Connect GitHub repo in Railway
+2. Add a volume mounted at `/data`
+3. Set `ADMIN_SECRET` and `DATABASE_URL=file:/data/prod.db`
+4. Push to deploy (uses included `Dockerfile` + `railway.toml`)
+
 ### Vercel / Netlify / serverless
 
 **Not recommended out of the box.** This app relies on:
