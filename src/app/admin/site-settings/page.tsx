@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AdminBackupPanel } from "@/components/AdminBackupPanel";
 import { AdminSiteSettingsForm } from "@/components/AdminSiteSettingsForm";
 import { getSiteSettings } from "@/lib/siteSettings";
 
@@ -21,6 +22,8 @@ export default async function AdminSiteSettingsPage() {
         key={`${settings.updatedAt}-${settings.footerText}-${settings.commentsEnabled}-${settings.projectCommentsEnabled}-${settings.homeHeaderColor}-${settings.siteTitleColor}`}
         settings={settings}
       />
+
+      <AdminBackupPanel />
 
       <p className="mt-10 text-sm text-muted">
         <Link href="/admin" className="text-accent underline-offset-4 hover:underline">
