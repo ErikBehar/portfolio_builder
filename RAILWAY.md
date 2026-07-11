@@ -49,7 +49,7 @@ In the Railway service → **Variables**:
 | `ADMIN_SECRET` | A long random string (your admin password) | Yes |
 | `DATABASE_URL` | `file:/data/prod.db` | Recommended |
 | `DATA_DIR` | `/data` | Optional (this is the default) |
-| `RAILWAY_RUN_SEED` | `true` | Optional — seed defaults on first deploy only, then remove |
+| `RAILWAY_RUN_SEED` | `true` | Optional — seed defaults on first deploy only, then remove. Defaults are also created on first page load without seed. |
 
 Example:
 
@@ -137,6 +137,10 @@ The Docker build runs `npm ci --ignore-scripts` in the deps stage (schema files 
 ### Health check fails / service unavailable at startup
 
 Usually `better-sqlite3` failed to load its native binding. The Dockerfile rebuilds it in the builder stage after `npm ci --ignore-scripts`. Check deploy logs for `Could not locate the bindings file` or Prisma/SQLite errors.
+
+### Seed fails with `Cannot find module '../src/lib/...'`
+
+The production image does not include all of `src/lib/`. Seed data lives in `prisma/seed-data.ts` only. You can also remove `RAILWAY_RUN_SEED` — the app creates defaults on first page load via `ensureDefault*` in the lib layer.
 
 ### Build fails on `better-sqlite3`
 

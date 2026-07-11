@@ -1,65 +1,17 @@
 import "dotenv/config";
 import { PrismaClient } from "../src/generated/prisma/client";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
-import { DEFAULT_HEADER_LINKS } from "../src/lib/headerLinks";
 import {
+  DEFAULT_HEADER_LINKS,
+  DEFAULT_SECTIONS,
   DEFAULT_SITE_SETTINGS,
   SITE_SETTINGS_ID,
-} from "../src/lib/siteSettings";
+} from "./seed-data";
 
 const adapter = new PrismaBetterSqlite3({
   url: process.env.DATABASE_URL ?? "file:./dev.db",
 });
 const prisma = new PrismaClient({ adapter });
-
-const DEFAULT_SECTIONS = [
-  {
-    slug: "code",
-    title: "Code",
-    description: "Code samples, repositories, and technical work.",
-    categories: [],
-    sortOrder: 0,
-  },
-  {
-    slug: "video-games",
-    title: "Video Games",
-    description: "Professional releases, personal projects, and game jam work.",
-    categories: [
-      { slug: "professional", title: "Professional" },
-      { slug: "personal", title: "Personal Projects" },
-      { slug: "jam", title: "Game Jams" },
-    ],
-    sortOrder: 1,
-  },
-  {
-    slug: "design",
-    title: "Design",
-    description: "Game design, level design, and app flow documentation.",
-    categories: [],
-    sortOrder: 2,
-  },
-  {
-    slug: "writing",
-    title: "Writing",
-    description: "Scripts, screenplays, and writing samples.",
-    categories: [],
-    sortOrder: 3,
-  },
-  {
-    slug: "visual-novels",
-    title: "Visual Novels",
-    description: "Visual novel projects and related work.",
-    categories: [],
-    sortOrder: 4,
-  },
-  {
-    slug: "animation",
-    title: "Animation",
-    description: "Animation work, shorts, and motion design.",
-    categories: [],
-    sortOrder: 5,
-  },
-];
 
 async function seedHeaderLinks() {
   const count = await prisma.headerLink.count();
