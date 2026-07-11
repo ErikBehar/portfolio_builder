@@ -132,7 +132,11 @@ Railway volume snapshots or periodic download via `railway ssh` / volume export.
 
 ### Build fails on `prisma generate` / schema not found
 
-The Docker build runs `npm ci --ignore-scripts` in the deps stage (schema files are not copied yet), then `prisma generate` in the builder stage. If you see schema-not-found errors, ensure `prisma/schema.prisma` and `prisma.config.ts` are committed to git.
+The Docker build runs `npm ci --ignore-scripts` in the deps stage (schema files are not copied yet), then `npm rebuild better-sqlite3` and `prisma generate` in the builder stage. If you see schema-not-found errors, ensure `prisma/schema.prisma` and `prisma.config.ts` are committed to git.
+
+### Health check fails / service unavailable at startup
+
+Usually `better-sqlite3` failed to load its native binding. The Dockerfile rebuilds it in the builder stage after `npm ci --ignore-scripts`. Check deploy logs for `Could not locate the bindings file` or Prisma/SQLite errors.
 
 ### Build fails on `better-sqlite3`
 
