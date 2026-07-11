@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { ApiError } from "@/lib/apiErrors";
 import { validateHeaderLinkIcon } from "@/lib/headerLinkIcons";
 import type { HeaderLinkIconSlug } from "@/lib/headerLinkIcons";
 
@@ -88,18 +89,67 @@ export async function getHeaderLinkById(id: string): Promise<HeaderLink | null> 
   return toHeaderLink(link);
 }
 
-export function validateHeaderLinkInput(body: {
+export type HeaderLinkInput = {
   label?: string;
   url?: string;
   icon?: string;
-}): string | null {
-  if (!body.label?.trim()) return "Label is required";
+  sortOrder?: number;
+};
+
+function parseHeaderLinkInput(body: HeaderLinkInput) {
+  if (!body.label?.trim()) {
+    throw new ApiError("Label is required", 400);
+  }
 
   const urlError = validateHeaderLinkUrl(body.url ?? "");
-  if (urlError) return urlError;
+  if (urlError) {
+    throw new ApiError(urlError, 400);
+  }
 
   const iconError = validateHeaderLinkIcon(body.icon ?? "");
-  if (iconError) return iconError;
+  if (iconError) {
+    throw new ApiError(iconError, 400);
+  }
 
-  return null;
+  return {
+    label: body.label.trim(),
+    url: body.url!.trim(),
+    icon: body.icon!,
+    sortOrder: body.sortOrder ?? 0,
+  };
+}
+
+export async function createHeaderLink(body: HeaderLinkInput) {
+  const input = parseHeaderLinkInput(body);
+
+  const link = await prisma.headerLink.create({
+    data: input,
+  });
+
+  return toHeaderLink(link);
+}
+
+export async function updateHeaderLink(id: string, body: HeaderLinkInput) {
+  const existing = await prisma.headerLink.findUnique({ where: { id } });
+  if (!existing) {
+    throw new ApiError("Header link not found", 404);
+  }
+
+  const input = parseHeaderLinkInput(body);
+
+  const link = await prisma.headerLink.update({
+    where: { id },
+    data: input,
+  });
+
+  return toHeaderLink(link);
+}
+
+export async function deleteHeaderLink(id: string) {
+  const link = await prisma.headerLink.findUnique({ where: { id } });
+  if (!link) {
+    throw new ApiError("Header link not found", 404);
+  }
+
+  await prisma.headerLink.delete({ where: { id } });
 }

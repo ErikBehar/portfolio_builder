@@ -1,3 +1,18 @@
+/** Format a comment timestamp for display. */
+export function formatCommentDate(
+  date: string,
+  options?: { includeTime?: boolean }
+) {
+  return new Date(date).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    ...(options?.includeTime
+      ? { hour: "numeric", minute: "2-digit" as const }
+      : {}),
+  });
+}
+
 /** Parse a YYYY-MM-DD form value as a stable calendar date (noon UTC). */
 export function parseDateInput(value: string): Date {
   const [year, month, day] = value.split("-").map(Number);

@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { LogComments } from "@/components/LogComments";
 import { MediaCarousel } from "@/components/MediaCarousel";
-import { formatLogDate, getLogEntryBySlug } from "@/lib/log";
+import { formatLogDate } from "@/lib/dates";
+import { getLogEntryBySlug } from "@/lib/log";
 import { getSiteSettings } from "@/lib/siteSettings";
 
 type LogEntryPageProps = {

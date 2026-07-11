@@ -171,12 +171,30 @@ Before going live:
 - [ ] Serve over HTTPS
 - [ ] Back up the database and `public/uploads/` regularly
 - [ ] Restrict server access (firewall, SSH keys)
-- [ ] Review unauthenticated API endpoints:
-  - `POST /api/upload` — accepts file uploads without auth
-  - `POST /api/log` — creates log entries without auth
-  - `PUT` / `DELETE /api/log/[id]` — modifies log entries without auth
 
-Admin **pages** are protected by middleware, but these API routes are callable directly. If the site is publicly accessible, consider adding `requireAdmin()` to these endpoints before production use.
+### Authentication model
+
+| Layer | Protection |
+|-------|------------|
+| Admin pages (`/admin/*`) | `middleware.ts` — redirects to login if session cookie is invalid |
+| Admin API mutations | `requireAdmin()` in each route — checks the same session cookie |
+| Public comment POST | Allowed without login; gated by site settings (`commentsEnabled`, `projectCommentsEnabled`) |
+
+**Admin-only mutations** (require a valid admin session):
+
+- `POST /api/upload`
+- `POST`, `PUT`, `DELETE` on projects, sections, labels, header links, log entries, site settings
+- `PUT`, `DELETE` on log/project comments (admin moderation)
+
+**Intentionally public** (no admin session required):
+
+- `POST /api/log/[id]/comments` — visitor comments on log entries (when enabled)
+- `POST /api/projects/[id]/comments` — visitor comments on projects (when enabled)
+- `POST /api/admin/auth` — login endpoint
+
+`GET` API routes exist for some resources but are not used by the public UI (pages read via server components and `src/lib/*`). They return the same normalized shapes as the lib layer.
+
+Set `ADMIN_SECRET` to a long random value before exposing the site to the internet.
 
 ## Troubleshooting
 
@@ -198,6 +216,17 @@ Regenerate the Prisma client and apply migrations:
 ```bash
 npx prisma generate
 npx prisma migrate deploy
+```
+
+### Build or dev server issues after moving the project
+
+Clear generated artifacts and reinstall:
+
+```bash
+npm run clean
+npm install
+npx prisma migrate deploy
+npm run dev    # or npm run build for production
 ```
 
 ### Uploads not appearing

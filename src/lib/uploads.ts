@@ -1,5 +1,6 @@
-import { unlink } from "fs/promises";
+import { mkdir, unlink, writeFile } from "fs/promises";
 import path from "path";
+import { ApiError } from "@/lib/apiErrors";
 
 export const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
 const UPLOAD_URL_PREFIX = "/uploads/";
@@ -82,4 +83,26 @@ export async function deleteRemovedUploads(
   nextUrls: string[]
 ): Promise<void> {
   await deleteUploadFiles(getRemovedUploadUrls(previousUrls, nextUrls));
+}
+
+export async function saveUploadedFile(file: File) {
+  const isImage = file.type.startsWith("image/");
+  const isVideo = file.type.startsWith("video/");
+
+  if (!isImage && !isVideo) {
+    throw new ApiError("Only image and video files are supported", 400);
+  }
+
+  const bytes = await file.arrayBuffer();
+  const buffer = Buffer.from(bytes);
+  const extension = path.extname(file.name) || (isImage ? ".jpg" : ".mp4");
+  const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}${extension}`;
+
+  await mkdir(UPLOAD_DIR, { recursive: true });
+  await writeFile(path.join(UPLOAD_DIR, filename), buffer);
+
+  return {
+    url: `/uploads/${filename}`,
+    type: isImage ? "image" : "video",
+  } as const;
 }

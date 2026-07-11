@@ -1,7 +1,6 @@
 import "dotenv/config";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { PrismaClient } from "@/generated/prisma/client";
-import type { ProjectLink } from "@/lib/types";
 
 const PRISMA_SCHEMA_VERSION = 10;
 
@@ -49,20 +48,3 @@ function getPrismaClient(): PrismaClient {
 }
 
 export const prisma = getPrismaClient();
-
-export function parseLinks(links: string): ProjectLink[] {
-  try {
-    const parsed = JSON.parse(links);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-export function slugify(value: string): string {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}

@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { formatLogDate, getLogEntries } from "@/lib/log";
+import { formatLogDate } from "@/lib/dates";
+import { getLogEntries } from "@/lib/log";
 
 export default async function LogArchivePage() {
   const entries = await getLogEntries();

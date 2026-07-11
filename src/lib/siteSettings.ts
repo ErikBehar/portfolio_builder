@@ -1,12 +1,11 @@
 import { unstable_noStore as noStore } from "next/cache";
 import { prisma } from "@/lib/db";
+import { ApiError } from "@/lib/apiErrors";
 import { DEFAULT_SITE_TITLE_COLOR } from "@/lib/siteConstants";
 import { DEFAULT_SECTION_COLOR } from "@/lib/sectionConstants";
 import { normalizeSectionColor, validateSectionColor } from "@/lib/sectionValidation";
 
 export const SITE_SETTINGS_ID = "default";
-
-export { DEFAULT_SITE_TITLE_COLOR } from "@/lib/siteConstants";
 
 export const DEFAULT_SITE_SETTINGS = {
   title: "Your Name's Portfolio",
@@ -150,4 +149,52 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     ),
     updatedAt: settings.updatedAt.toISOString(),
   };
+}
+
+export async function upsertSiteSettings(body: {
+  title?: string;
+  description?: string;
+  footerText?: string;
+  commentsEnabled?: boolean;
+  projectCommentsEnabled?: boolean;
+  homeHeaderColor?: string;
+  siteTitleColor?: string;
+}): Promise<SiteSettings> {
+  const validationError = validateSiteSettingsInput(body);
+  if (validationError) {
+    throw new ApiError(validationError, 400);
+  }
+
+  const homeHeaderColor = normalizeSectionColor(body.homeHeaderColor);
+  const siteTitleColor = normalizeSiteColor(
+    body.siteTitleColor,
+    DEFAULT_SITE_TITLE_COLOR
+  );
+
+  await prisma.siteSettings.upsert({
+    where: { id: SITE_SETTINGS_ID },
+    create: {
+      id: SITE_SETTINGS_ID,
+      title: body.title!.trim(),
+      description: body.description!.trim(),
+      footerText:
+        typeof body.footerText === "string" ? body.footerText.trim() : "",
+      commentsEnabled: body.commentsEnabled ?? true,
+      projectCommentsEnabled: body.projectCommentsEnabled ?? true,
+      homeHeaderColor,
+      siteTitleColor,
+    },
+    update: {
+      title: body.title!.trim(),
+      description: body.description!.trim(),
+      footerText:
+        typeof body.footerText === "string" ? body.footerText.trim() : "",
+      commentsEnabled: body.commentsEnabled ?? true,
+      projectCommentsEnabled: body.projectCommentsEnabled ?? true,
+      homeHeaderColor,
+      siteTitleColor,
+    },
+  });
+
+  return getSiteSettings();
 }

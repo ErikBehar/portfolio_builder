@@ -64,6 +64,8 @@ portfolio_website/
 │   └── seed.ts                # Default sections, header links, site settings
 ├── public/
 │   └── uploads/               # User-uploaded images and videos
+├── scripts/
+│   └── clean.mjs              # Remove build artifacts (used by npm run clean)
 ├── src/
 │   ├── app/
 │   │   ├── layout.tsx         # Root layout (header, footer, metadata)
@@ -72,38 +74,54 @@ portfolio_website/
 │   │   ├── timeline/          # Cross-section timeline
 │   │   ├── log/               # Log archive and entry pages
 │   │   ├── admin/             # Admin dashboard and CRUD pages
-│   │   └── api/               # REST API routes
+│   │   └── api/               # Thin REST wrappers over src/lib
 │   ├── components/            # React components (public + admin)
 │   ├── generated/prisma/      # Generated Prisma client (do not edit)
 │   ├── lib/                   # Data access, auth, validation, utilities
-│   └── middleware.ts          # Admin route protection
+│   └── middleware.ts          # Admin page protection
 ├── .env.example               # Environment variable template
 ├── DEPLOY.md                  # Production deployment guide
 └── package.json
 ```
 
+### Architecture
+
+Server pages and API routes share a single **lib-first** data layer:
+
+- **`src/lib/*`** — queries, validation, CRUD, and response shaping (typed mappers like `toProjectWithMedia`, `toLogEntry`)
+- **`src/app/api/*`** — thin route handlers that call lib functions and return JSON
+- **`src/middleware.ts`** — protects `/admin` pages; mutation routes also call `requireAdmin()` from `admin.ts`
+
+Admin UI forms call the API routes; public pages read data directly via lib functions in server components.
+
 ### Key directories
 
-**`src/app/api/`** — REST endpoints for projects, sections, labels, log entries, comments, uploads, site settings, header links, and admin auth.
+**`src/app/api/`** — REST endpoints for projects, sections, labels, log entries, comments, uploads, site settings, header links, and admin auth. Mutation routes require admin authentication.
 
 **`src/lib/`** — Server-side logic:
 
 | File | Purpose |
 |------|---------|
-| `db.ts` | Prisma client, slugify, link parsing |
-| `auth.ts` / `admin.ts` | Password login, session cookies, API auth guard |
-| `projects.ts` | Project queries, labels, featured/timeline |
-| `log.ts` | Log entry queries |
-| `sections.ts` | Section CRUD and category parsing |
-| `labels.ts` | Label management and system labels |
-| `siteSettings.ts` | Site branding and comment toggles |
+| `db.ts` | Prisma client singleton |
+| `auth.ts` / `admin.ts` | Password login, session cookies, `requireAdmin()` API guard |
+| `projects.ts` | Project queries, CRUD, labels, featured/timeline |
+| `log.ts` | Log entry queries and CRUD |
+| `sections.ts` | Section queries and CRUD |
+| `labels.ts` | Label management, system labels, usage counts |
+| `comments.ts` | Shared comment CRUD for log entries and projects |
+| `siteSettings.ts` | Site branding, comment toggles, upsert |
 | `headerLinks.ts` | Header navigation links |
-| `uploads.ts` | Upload path helpers and file cleanup |
-| `media.ts` | Project cover image resolution |
+| `uploads.ts` | Upload storage, path safety, file cleanup |
+| `media.ts` / `mediaSync.ts` | Cover image helpers, media replace-on-save |
+| `slug.ts` / `links.ts` | Slug validation, `parseLinks` for project links JSON |
+| `dates.ts` | Calendar date parsing and display formatting |
+| `sectionValidation.ts` | Section slug/color validation |
+| `apiRoute.ts` / `apiErrors.ts` | Shared API error handling |
+| `clientUpload.ts` | Client-side upload helper for admin forms |
 | `richText.ts` | Markdown link and URL parsing |
 | `types.ts` | Shared TypeScript types |
 
-**`src/components/`** — UI split between public views (`ProjectGrid`, `MediaCarousel`, `ProjectComments`, etc.) and admin forms (`AdminProjectForm`, `AdminSiteSettingsForm`, etc.).
+**`src/components/`** — UI split between public views (`ProjectGrid`, `MediaCarousel`, `CommentsSection`, etc.) and admin forms (`AdminProjectForm`, `AdminSiteSettingsForm`, etc.). `CommentsSection` handles public and admin comment UI for both log entries and projects.
 
 ### Data model
 

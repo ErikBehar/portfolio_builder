@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { HomeSectionHeading } from "@/components/HomeSectionHeading";
 import type { LogEntryWithMedia } from "@/lib/types";
-import { formatLogDate } from "@/lib/log";
+import { formatLogDate } from "@/lib/dates";
 
 type LogEntryPreviewProps = {
   entry: LogEntryWithMedia;

@@ -1,63 +1,32 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin";
-import { prisma } from "@/lib/db";
+import { handleApiError } from "@/lib/apiRoute";
+import type { CommentRouteContext } from "@/lib/apiTypes";
+import { deleteComment, updateComment } from "@/lib/comments";
 
-type RouteContext = {
-  params: Promise<{ id: string; commentId: string }>;
-};
-
-export async function PUT(request: Request, context: RouteContext) {
+export async function PUT(request: Request, context: CommentRouteContext) {
   const unauthorized = await requireAdmin();
   if (unauthorized) return unauthorized;
 
-  const { id, commentId } = await context.params;
-  const body = await request.json();
-
-  const comment = await prisma.comment.findFirst({
-    where: { id: commentId, logEntryId: id },
-  });
-
-  if (!comment) {
-    return NextResponse.json({ error: "Comment not found" }, { status: 404 });
+  try {
+    const { id, commentId } = await context.params;
+    const body = await request.json();
+    const comment = await updateComment("log", id, commentId, body);
+    return NextResponse.json(comment);
+  } catch (error) {
+    return handleApiError(error);
   }
-
-  if (!body.author?.trim() || !body.content?.trim()) {
-    return NextResponse.json(
-      { error: "Name and comment are required" },
-      { status: 400 }
-    );
-  }
-
-  const updated = await prisma.comment.update({
-    where: { id: commentId },
-    data: {
-      author: body.author.trim(),
-      content: body.content.trim(),
-    },
-  });
-
-  return NextResponse.json({
-    id: updated.id,
-    author: updated.author,
-    content: updated.content,
-    createdAt: updated.createdAt.toISOString(),
-  });
 }
 
-export async function DELETE(_request: Request, context: RouteContext) {
+export async function DELETE(_request: Request, context: CommentRouteContext) {
   const unauthorized = await requireAdmin();
   if (unauthorized) return unauthorized;
 
-  const { id, commentId } = await context.params;
-
-  const comment = await prisma.comment.findFirst({
-    where: { id: commentId, logEntryId: id },
-  });
-
-  if (!comment) {
-    return NextResponse.json({ error: "Comment not found" }, { status: 404 });
+  try {
+    const { id, commentId } = await context.params;
+    await deleteComment("log", id, commentId);
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    return handleApiError(error);
   }
-
-  await prisma.comment.delete({ where: { id: commentId } });
-  return NextResponse.json({ success: true });
 }

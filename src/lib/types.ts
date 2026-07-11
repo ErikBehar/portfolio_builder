@@ -22,6 +22,15 @@ export type MediaItem = {
   sortOrder: number;
 };
 
+export type LogComment = {
+  id: string;
+  author: string;
+  content: string;
+  createdAt: string;
+};
+
+export type ProjectComment = LogComment;
+
 export type ProjectWithMedia = {
   id: string;
   title: string;
@@ -38,23 +47,12 @@ export type ProjectWithMedia = {
   comments?: ProjectComment[];
 };
 
-export type LogMediaItem = MediaItem;
-
-export type LogComment = {
-  id: string;
-  author: string;
-  content: string;
-  createdAt: string;
-};
-
-export type ProjectComment = LogComment;
-
 export type LogEntryWithMedia = {
   id: string;
   title: string;
   slug: string;
   content: string;
   date: string;
-  media: LogMediaItem[];
+  media: MediaItem[];
   comments?: LogComment[];
 };

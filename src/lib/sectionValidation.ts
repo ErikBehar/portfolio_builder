@@ -1,4 +1,4 @@
-import { slugify } from "@/lib/db";
+import { slugify, validateSlug } from "@/lib/slug";
 import { DEFAULT_SECTION_COLOR } from "@/lib/sectionConstants";
 
 export const RESERVED_SECTION_SLUGS = new Set([
@@ -15,14 +15,7 @@ export function isReservedSectionSlug(slug: string): boolean {
 }
 
 export function validateSectionSlug(slug: string): string | null {
-  if (!slug) return "Slug is required";
-  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
-    return "Slug must use lowercase letters, numbers, and hyphens";
-  }
-  if (isReservedSectionSlug(slug)) {
-    return "This slug is reserved";
-  }
-  return null;
+  return validateSlug(slug, { reserved: RESERVED_SECTION_SLUGS });
 }
 
 export function buildSectionSlug(title: string, slug?: string): string {

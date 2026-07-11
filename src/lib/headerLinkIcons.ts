@@ -25,6 +25,3 @@ export function validateHeaderLinkIcon(icon: string): string | null {
   return null;
 }
 
-export function getHeaderLinkIconLabel(icon: HeaderLinkIconSlug): string {
-  return HEADER_LINK_ICONS.find((entry) => entry.slug === icon)?.label ?? icon;
-}

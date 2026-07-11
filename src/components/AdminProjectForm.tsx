@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { DatePicker } from "@/components/DatePicker";
 import { toDateInputValue, todayInputValue } from "@/lib/dates";
+import { uploadMediaFiles, type MediaDraft } from "@/lib/clientUpload";
 import { getDefaultPreviewMediaIndex } from "@/lib/media";
 import type { Section } from "@/lib/sections";
 import {
@@ -18,13 +19,6 @@ type AdminProjectFormProps = {
   section: Section;
   project?: ProjectWithMedia;
   allLabels: ProjectLabel[];
-};
-
-type MediaDraft = {
-  id?: string;
-  type: MediaType;
-  url: string;
-  caption: string;
 };
 
 export function AdminProjectForm({
@@ -118,20 +112,6 @@ export function AdminProjectForm({
     }
   }
 
-  async function uploadFile(file: File) {
-    const body = new FormData();
-    body.append("file", file);
-
-    const response = await fetch("/api/upload", { method: "POST", body });
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error ?? "Upload failed");
-    }
-
-    return data.url as string;
-  }
-
   async function handleMediaUpload(
     event: React.ChangeEvent<HTMLInputElement>,
     type: MediaType
@@ -142,13 +122,7 @@ export function AdminProjectForm({
     setStatus("Uploading media...");
 
     try {
-      const uploaded = await Promise.all(
-        files.map(async (file) => ({
-          type,
-          url: await uploadFile(file),
-          caption: "",
-        }))
-      );
+      const uploaded = await uploadMediaFiles(files, type);
       setMedia((current) => {
         if (type === "image" && !current.some((item) => item.type === "image")) {
           setPreviewMediaIndex(current.length);

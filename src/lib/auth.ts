@@ -57,9 +57,3 @@ export async function verifyAdminToken(token: string | undefined): Promise<boole
   const expected = await signPayload(getAdminSecret(), payload);
   return signature === expected;
 }
-
-export async function isAdminAuthenticated(
-  token: string | undefined
-): Promise<boolean> {
-  return verifyAdminToken(token);
-}

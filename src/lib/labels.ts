@@ -1,8 +1,10 @@
-import { prisma, slugify } from "@/lib/db";
+import { prisma } from "@/lib/db";
+import { ApiError } from "@/lib/apiErrors";
+import { slugify, validateSlug } from "@/lib/slug";
 import { FEATURED_LABEL_SLUG, SHOW_LABEL_SLUG } from "@/lib/types";
 import type { ProjectLabel } from "@/lib/types";
 
-export type LabelRecord = {
+type LabelRecord = {
   id: string;
   name: string;
   slug: string;
@@ -10,7 +12,7 @@ export type LabelRecord = {
   updatedAt: Date;
 };
 
-export function toLabel(record: LabelRecord): ProjectLabel & { createdAt: string } {
+function toLabel(record: LabelRecord): ProjectLabel & { createdAt: string } {
   return {
     id: record.id,
     name: record.name,
@@ -33,16 +35,6 @@ export async function getLabelById(id: string) {
   const label = await prisma.label.findUnique({ where: { id } });
   if (!label) return null;
   return toLabel(label);
-}
-
-export async function getLabelBySlug(slug: string) {
-  const label = await prisma.label.findUnique({ where: { slug } });
-  if (!label) return null;
-  return toLabel(label);
-}
-
-export async function getShowLabel() {
-  return getLabelBySlug(SHOW_LABEL_SLUG);
 }
 
 export async function ensureShowLabel() {
@@ -74,23 +66,97 @@ export async function ensureSystemLabels() {
 }
 
 export function validateLabelSlug(slug: string): string | null {
-  if (!slug) return "Slug is required";
-  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
-    return "Slug must use lowercase letters, numbers, and hyphens";
-  }
-  return null;
+  return validateSlug(slug);
 }
 
 export function buildLabelSlug(name: string, slug?: string): string {
   return slugify(slug?.trim() || name);
 }
 
-export async function getLabelUsageCountsForSection(section: string) {
+export async function createLabel(body: { name?: string; slug?: string }) {
+  if (!body.name?.trim()) {
+    throw new ApiError("Name is required", 400);
+  }
+
+  const slug = buildLabelSlug(body.name, body.slug);
+  const slugError = validateLabelSlug(slug);
+  if (slugError) {
+    throw new ApiError(slugError, 400);
+  }
+
+  const existing = await prisma.label.findUnique({ where: { slug } });
+  if (existing) {
+    throw new ApiError("A label with this slug already exists", 409);
+  }
+
+  const label = await prisma.label.create({
+    data: {
+      name: body.name.trim(),
+      slug,
+    },
+  });
+
+  return toLabel(label);
+}
+
+export async function updateLabel(
+  id: string,
+  body: { name?: string; slug?: string }
+) {
+  const existing = await prisma.label.findUnique({ where: { id } });
+  if (!existing) {
+    throw new ApiError("Label not found", 404);
+  }
+
+  if (!body.name?.trim()) {
+    throw new ApiError("Name is required", 400);
+  }
+
+  const slug = buildLabelSlug(body.name, body.slug);
+  const slugError = validateLabelSlug(slug);
+  if (slugError) {
+    throw new ApiError(slugError, 400);
+  }
+
+  const conflict = await prisma.label.findFirst({
+    where: { slug, NOT: { id } },
+  });
+  if (conflict) {
+    throw new ApiError("A label with this slug already exists", 409);
+  }
+
+  const label = await prisma.label.update({
+    where: { id },
+    data: {
+      name: body.name.trim(),
+      slug,
+    },
+  });
+
+  return toLabel(label);
+}
+
+export async function deleteLabel(id: string) {
+  const label = await prisma.label.findUnique({ where: { id } });
+  if (!label) {
+    throw new ApiError("Label not found", 404);
+  }
+
+  if (label.slug === SHOW_LABEL_SLUG) {
+    throw new ApiError("The default show label cannot be deleted", 400);
+  }
+
+  await prisma.label.delete({ where: { id } });
+}
+
+async function getLabelUsageCounts(
+  where: Parameters<typeof prisma.projectLabel.groupBy>[0]["where"]
+) {
   await ensureSystemLabels();
 
   const rows = await prisma.projectLabel.groupBy({
     by: ["labelId"],
-    where: { project: { section } },
+    where,
     _count: { labelId: true },
   });
 
@@ -108,30 +174,15 @@ export async function getLabelUsageCountsForSection(section: string) {
   ) as Record<string, number>;
 }
 
+export async function getLabelUsageCountsForSection(section: string) {
+  return getLabelUsageCounts({ project: { section } });
+}
+
 export async function getLabelUsageCountsForTimeline() {
-  await ensureSystemLabels();
   const showLabel = await ensureShowLabel();
-
-  const rows = await prisma.projectLabel.groupBy({
-    by: ["labelId"],
-    where: {
-      project: {
-        labels: { some: { labelId: showLabel.id } },
-      },
+  return getLabelUsageCounts({
+    project: {
+      labels: { some: { labelId: showLabel.id } },
     },
-    _count: { labelId: true },
   });
-
-  const labels = await prisma.label.findMany({
-    where: { id: { in: rows.map((row) => row.labelId) } },
-  });
-
-  const labelById = Object.fromEntries(labels.map((label) => [label.id, label]));
-
-  return Object.fromEntries(
-    rows.map((row) => [
-      labelById[row.labelId]?.slug ?? row.labelId,
-      row._count.labelId,
-    ])
-  ) as Record<string, number>;
 }
