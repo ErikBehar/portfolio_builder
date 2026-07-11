@@ -8,6 +8,7 @@
     "postinstall": "prisma generate",
     "db:seed": "tsx prisma/seed.ts",
     "start": "next start",
+    "clean": "node scripts/clean.mjs",
     "lint": "eslint"
   },
   "dependencies": {

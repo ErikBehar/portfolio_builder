@@ -122,18 +122,6 @@ LogEntry
 
 SQLite stores JSON fields as strings: `Project.links` and `PortfolioSection.categories`.
 
-## Getting started
-
-```bash
-npm install
-cp .env.example .env
-npx prisma migrate dev
-npm run db:seed    # optional — defaults are also created on first load
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000).
-
 ## Environment variables
 
 Copy `.env.example` to `.env`:
@@ -149,19 +137,51 @@ Default site title, description, footer text, and header buttons are created by 
 
 | Script | Command | Purpose |
 |--------|---------|---------|
-| `dev` | `prisma generate && next dev` | Development server |
+| `dev` | `prisma generate && next dev` | Development server at [http://localhost:3000](http://localhost:3000) |
 | `build` | `prisma generate && next build` | Production build |
-| `start` | `next start` | Run production server (port 3000) |
-| `db:seed` | `tsx prisma/seed.ts` | Seed default sections, header links, site settings |
+| `start` | `next start` | Run production server (after `build`; port 3000) |
+| `clean` | `node scripts/clean.mjs` | Remove `.next/`, generated Prisma client, logs, and other build artifacts |
+| `db:seed` | `tsx prisma/seed.ts` | Seed default sections, header links, and site settings |
 | `lint` | `eslint` | Lint the codebase |
 
-Database migrations are run manually:
+`postinstall` runs `prisma generate` automatically after `npm install`.
+
+### Database commands
+
+| Task | Command |
+|------|---------|
+| Apply migrations (dev) | `npx prisma migrate dev` |
+| Apply migrations (production) | `npx prisma migrate deploy` |
+| Regenerate Prisma client only | `npx prisma generate` |
+| Seed defaults | `npm run db:seed` |
+| Open Prisma Studio | `npx prisma studio` |
+
+### Common workflows
+
+**First-time setup**
 
 ```bash
-npx prisma migrate dev      # development
-npx prisma migrate deploy   # production
+npm install
+cp .env.example .env
+npx prisma migrate dev
+npm run db:seed    # optional — defaults are also created on first load
+npm run dev
 ```
 
-## Deployment
+**After moving the project or a bad build**
 
-See **[DEPLOY.md](./DEPLOY.md)** for production deployment instructions, including database setup, persistent storage, and security considerations.
+```bash
+npm run clean
+npm install
+npx prisma migrate dev
+npm run dev
+```
+
+**Production**
+
+```bash
+npm run build
+npm run start
+```
+
+See **[DEPLOY.md](./DEPLOY.md)** for full production deployment instructions.
