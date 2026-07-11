@@ -1,0 +1,143 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model PortfolioSection {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  description String
+  color       String   @default("#5b9fd4")
+  categories  String   @default("[]")
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SiteSettings {
+  id                     String   @id @default("default")
+  title                  String
+  description            String
+  footerText             String   @default("")
+  commentsEnabled        Boolean  @default(true)
+  projectCommentsEnabled Boolean  @default(true)
+  homeHeaderColor        String   @default("#5b9fd4")
+  siteTitleColor         String   @default("#e8edf5")
+  updatedAt              DateTime @updatedAt
+}
+
+model HeaderLink {
+  id        String   @id @default(cuid())
+  label     String
+  url       String
+  icon      String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Label {
+  id        String         @id @default(cuid())
+  name      String
+  slug      String         @unique
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  projects  ProjectLabel[]
+}
+
+model Project {
+  id           String         @id @default(cuid())
+  title        String
+  slug         String
+  description  String?
+  section      String
+  category     String?
+  links        String         @default("[]")
+  sortOrder    Int            @default(0)
+  coverMediaId String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  coverMedia   Media?            @relation("ProjectCoverMedia", fields: [coverMediaId], references: [id], onDelete: SetNull)
+  media        Media[]           @relation("ProjectMedia")
+  labels       ProjectLabel[]
+  comments     ProjectComment[]
+
+  @@unique([section, slug])
+  @@index([section])
+}
+
+model ProjectLabel {
+  projectId String
+  labelId   String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  label     Label   @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, labelId])
+  @@index([labelId])
+}
+
+model Media {
+  id        String    @id @default(cuid())
+  projectId String
+  type      String
+  url       String
+  caption   String?
+  sortOrder Int       @default(0)
+  createdAt DateTime  @default(now())
+  project   Project   @relation("ProjectMedia", fields: [projectId], references: [id], onDelete: Cascade)
+  coverFor  Project[] @relation("ProjectCoverMedia")
+
+  @@index([projectId])
+}
+
+model LogEntry {
+  id        String     @id @default(cuid())
+  title     String
+  slug      String     @unique
+  content   String
+  date      DateTime
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  media     LogMedia[]
+  comments  Comment[]
+}
+
+model LogMedia {
+  id         String   @id @default(cuid())
+  logEntryId String
+  type       String
+  url        String
+  caption    String?
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+  logEntry   LogEntry @relation(fields: [logEntryId], references: [id], onDelete: Cascade)
+
+  @@index([logEntryId])
+}
+
+model Comment {
+  id         String   @id @default(cuid())
+  logEntryId String
+  author     String
+  content    String
+  createdAt  DateTime @default(now())
+  logEntry   LogEntry @relation(fields: [logEntryId], references: [id], onDelete: Cascade)
+
+  @@index([logEntryId])
+}
+
+model ProjectComment {
+  id        String   @id @default(cuid())
+  projectId String
+  author    String
+  content   String
+  createdAt DateTime @default(now())
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
