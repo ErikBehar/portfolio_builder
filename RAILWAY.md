@@ -130,6 +130,10 @@ Railway volume snapshots or periodic download via `railway ssh` / volume export.
 
 ## Troubleshooting
 
+### Build fails on `prisma generate` / schema not found
+
+The Docker build runs `npm ci --ignore-scripts` in the deps stage (schema files are not copied yet), then `prisma generate` in the builder stage. If you see schema-not-found errors, ensure `prisma/schema.prisma` and `prisma.config.ts` are committed to git.
+
 ### Build fails on `better-sqlite3`
 
 The `Dockerfile` installs `python3`, `make`, and `g++` for native module compilation. If build still fails, check Railway build logs for missing system packages.
