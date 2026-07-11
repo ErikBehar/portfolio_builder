@@ -5,7 +5,7 @@ This guide deploys the portfolio site to [Railway](https://railway.app) from Git
 Railway runs the included `Dockerfile` and `scripts/railway-start.mjs`, which:
 
 1. Mounts persistent data under `/data` (via a Railway volume)
-2. Symlinks `public/uploads` → `/data/uploads` so Next.js can serve media
+2. Stores uploads in `/data/uploads` and serves them via `/uploads/[filename]` (Next.js does not reliably serve symlinks outside `public/`)
 3. Runs `prisma migrate deploy`
 4. Starts the app with `npm start`
 
@@ -91,8 +91,8 @@ Container starts → scripts/railway-start.mjs
     ↓
 /data/prod.db          (SQLite, on volume)
 /data/uploads/       (media, on volume)
-public/uploads → symlink to /data/uploads
     ↓
+/uploads/* served by app route from /data/uploads
 prisma migrate deploy → npm start
 ```
 
@@ -151,6 +151,13 @@ The `Dockerfile` installs `python3`, `make`, and `g++` for native module compila
 - Confirm `ADMIN_SECRET` is set in Railway variables
 - Use the exact value as the password
 - Site must be served over HTTPS (Railway provides this)
+
+### Uploads return 404
+
+- Confirm a volume is mounted at `/data`
+- Check deploy logs for `UPLOAD_DIR=/data/uploads` and `UPLOAD_FILE_COUNT`
+- If count is `0` but the site references media, files were likely uploaded before the volume existed (ephemeral disk). Re-upload media, or restore from a backup into `/data/uploads`
+- After this fix, uploads are written to `/data/uploads` and served via `/uploads/[filename]` — not via a `public/` symlink
 
 ### Uploads disappear after redeploy
 

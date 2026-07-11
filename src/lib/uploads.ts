@@ -2,7 +2,16 @@ import { mkdir, unlink, writeFile } from "fs/promises";
 import path from "path";
 import { ApiError } from "@/lib/apiErrors";
 
-export const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
+export function resolveUploadDir(): string {
+  const dataDir = process.env.DATA_DIR?.trim();
+  if (dataDir) {
+    return path.join(path.resolve(dataDir), "uploads");
+  }
+
+  return path.join(process.cwd(), "public", "uploads");
+}
+
+export const UPLOAD_DIR = resolveUploadDir();
 const UPLOAD_URL_PREFIX = "/uploads/";
 
 export function isManagedUploadUrl(url: string): boolean {
