@@ -1,4 +1,5 @@
 import { parseRichText } from "@/lib/richText";
+import { RichTextLink } from "@/components/RichTextLink";
 
 type RichTextProps = {
   content?: string | null;
@@ -6,9 +7,6 @@ type RichTextProps = {
   fallback?: string;
   interactive?: boolean;
 };
-
-const linkClassName =
-  "text-accent underline decoration-accent/50 underline-offset-2 transition-colors hover:text-foreground hover:decoration-accent";
 
 export function RichText({
   content,
@@ -42,19 +40,8 @@ export function RichText({
           );
         }
 
-        const external = part.href.startsWith("http");
-
         return (
-          <a
-            key={index}
-            href={part.href}
-            className={linkClassName}
-            target={external ? "_blank" : undefined}
-            rel={external ? "noreferrer" : undefined}
-            onClick={(event) => event.stopPropagation()}
-          >
-            {part.label}
-          </a>
+          <RichTextLink key={index} href={part.href} label={part.label} />
         );
       })}
     </div>
