@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { safeAdminRedirectPath } from "@/lib/safeRedirect";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -10,7 +11,7 @@ export default function AdminLoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const redirectTo = searchParams.get("from") ?? "/admin";
+  const redirectTo = safeAdminRedirectPath(searchParams.get("from"));
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();

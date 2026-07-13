@@ -1,9 +1,18 @@
 import { prisma } from "@/lib/db";
 import { ApiError } from "@/lib/apiErrors";
+import {
+  COMMENT_AUTHOR_MAX_LENGTH,
+  COMMENT_CONTENT_MAX_LENGTH,
+} from "@/lib/commentLimits";
 import { getSiteSettings } from "@/lib/siteSettings";
 import type { LogComment } from "@/lib/types";
 
 export type CommentParentType = "log" | "project";
+
+export {
+  COMMENT_AUTHOR_MAX_LENGTH,
+  COMMENT_CONTENT_MAX_LENGTH,
+} from "@/lib/commentLimits";
 
 function serializeComment(comment: {
   id: string;
@@ -24,10 +33,24 @@ function validateCommentInput(body: { author?: string; content?: string }) {
     throw new ApiError("Name and comment are required", 400);
   }
 
-  return {
-    author: body.author.trim(),
-    content: body.content.trim(),
-  };
+  const author = body.author.trim();
+  const content = body.content.trim();
+
+  if (author.length > COMMENT_AUTHOR_MAX_LENGTH) {
+    throw new ApiError(
+      `Name must be ${COMMENT_AUTHOR_MAX_LENGTH} characters or fewer`,
+      400
+    );
+  }
+
+  if (content.length > COMMENT_CONTENT_MAX_LENGTH) {
+    throw new ApiError(
+      `Comment must be ${COMMENT_CONTENT_MAX_LENGTH} characters or fewer`,
+      400
+    );
+  }
+
+  return { author, content };
 }
 
 async function assertCommentsEnabled(parentType: CommentParentType) {

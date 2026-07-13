@@ -2,6 +2,10 @@
 
 import { useState } from "react";
 import { formatCommentDate } from "@/lib/dates";
+import {
+  COMMENT_AUTHOR_MAX_LENGTH,
+  COMMENT_CONTENT_MAX_LENGTH,
+} from "@/lib/commentLimits";
 import type { LogComment } from "@/lib/types";
 
 type CommentsSectionProps = {
@@ -148,12 +152,14 @@ export function CommentsSection({
                   <input
                     value={editAuthor}
                     onChange={(event) => setEditAuthor(event.target.value)}
+                    maxLength={COMMENT_AUTHOR_MAX_LENGTH}
                     className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
                     placeholder="Name"
                   />
                   <textarea
                     value={editContent}
                     onChange={(event) => setEditContent(event.target.value)}
+                    maxLength={COMMENT_CONTENT_MAX_LENGTH}
                     rows={4}
                     className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
                     placeholder="Comment"
@@ -233,6 +239,7 @@ export function CommentsSection({
                 required
                 value={author}
                 onChange={(event) => setAuthor(event.target.value)}
+                maxLength={COMMENT_AUTHOR_MAX_LENGTH}
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
                 placeholder="Your name"
               />
@@ -245,10 +252,14 @@ export function CommentsSection({
               required
               value={content}
               onChange={(event) => setContent(event.target.value)}
+              maxLength={COMMENT_CONTENT_MAX_LENGTH}
               rows={4}
               className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
               placeholder="Write a comment..."
             />
+            <span className="block text-xs text-muted">
+              {content.length}/{COMMENT_CONTENT_MAX_LENGTH}
+            </span>
           </label>
 
           <button

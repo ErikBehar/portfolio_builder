@@ -7,9 +7,25 @@ import {
   verifyAdminPassword,
   verifyAdminToken,
 } from "@/lib/auth";
+import {
+  LOGIN_RATE_LIMIT,
+  checkRateLimit,
+  getClientIp,
+  rateLimitExceededResponse,
+} from "@/lib/rateLimit";
 import { cookies } from "next/headers";
 
 export async function POST(request: Request) {
+  const ip = getClientIp(request);
+  const limited = checkRateLimit(
+    `admin-login:${ip}`,
+    LOGIN_RATE_LIMIT.limit,
+    LOGIN_RATE_LIMIT.windowMs
+  );
+  if (!limited.ok) {
+    return rateLimitExceededResponse(limited.retryAfterSec);
+  }
+
   const body = await request.json();
 
   if (!body.password || typeof body.password !== "string") {
