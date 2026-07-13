@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { setAdminFlash } from "@/lib/adminFlash";
 import type { ProjectWithMedia } from "@/lib/types";
 import type { Section } from "@/lib/sections";
 
@@ -36,6 +37,7 @@ export function AdminProjectList({ section, projects }: AdminProjectListProps) {
     }
 
     setItems((current) => current.filter((item) => item.id !== project.id));
+    setAdminFlash("Project deleted.");
     router.refresh();
   }
 

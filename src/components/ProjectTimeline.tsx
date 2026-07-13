@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { formatLogDate } from "@/lib/dates";
+import { usePersistedLabelFilters } from "@/hooks/usePersistedLabelFilters";
 import { projectMatchesLabels } from "@/lib/labelFilter";
 import { getProjectCoverMedia } from "@/lib/media";
 import { RichText } from "@/components/RichText";
@@ -166,26 +166,25 @@ function buildTicks(start: Date, end: Date, pxPerMonth: number): TimelineTick[] 
   return ticks;
 }
 
+const TIMELINE_DEFAULT_LABELS: string[] = [];
+
 export function ProjectTimeline({
   entries,
   allLabels,
   labelCounts,
   sectionLegend,
 }: ProjectTimelineProps) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const timelineContainerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
   const [zoomMultiplier, setZoomMultiplier] = useState(1);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
-  const selectedSlugs = useMemo(() => {
-    const fromUrl = searchParams.get("labels");
-    if (!fromUrl || fromUrl === "none") return [];
-    return fromUrl.split(",").filter(Boolean);
-  }, [searchParams]);
+  const { selectedSlugs, toggleLabel } = usePersistedLabelFilters({
+    scope: "timeline",
+    defaultSlugs: TIMELINE_DEFAULT_LABELS,
+    emptyMeansNone: false,
+  });
 
   const filteredEntries = useMemo(
     () =>
@@ -296,21 +295,6 @@ export function ProjectTimeline({
       contentHeight: AXIS_HEIGHT + (maxLane + 1) * LANE_HEIGHT + 48,
     };
   }, [containerWidth, filteredEntries, pxPerMonth, timelineRange]);
-
-  function toggleLabel(slug: string) {
-    const next = selectedSlugs.includes(slug)
-      ? selectedSlugs.filter((entry) => entry !== slug)
-      : [...selectedSlugs, slug];
-
-    const params = new URLSearchParams(searchParams.toString());
-    if (next.length === 0) {
-      params.delete("labels");
-    } else {
-      params.set("labels", next.join(","));
-    }
-    const query = params.toString();
-    router.replace(`${pathname}?${query}`, { scroll: false });
-  }
 
   function zoomOut() {
     setZoomMultiplier((current) =>

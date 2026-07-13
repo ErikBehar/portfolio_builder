@@ -1,5 +1,6 @@
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { AdminFlashBanner } from "@/components/AdminFlashBanner";
 import { COOKIE_NAME, verifyAdminToken } from "@/lib/auth";
 
 export default async function AdminLayout({
@@ -24,5 +25,10 @@ export default async function AdminLayout({
     redirect(`/admin/login?from=${encodeURIComponent(from)}`);
   }
 
-  return children;
+  return (
+    <>
+      {children}
+      <AdminFlashBanner />
+    </>
+  );
 }

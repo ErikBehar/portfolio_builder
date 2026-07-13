@@ -7,6 +7,7 @@ import { toDateInputValue, todayInputValue } from "@/lib/dates";
 import { uploadMediaFiles, type MediaDraft } from "@/lib/clientUpload";
 import { getDefaultPreviewMediaIndex } from "@/lib/media";
 import type { Section } from "@/lib/sections";
+import { setAdminFlash } from "@/lib/adminFlash";
 import {
   SHOW_LABEL_SLUG,
   type MediaType,
@@ -202,6 +203,7 @@ export function AdminProjectForm({
       return;
     }
 
+    setAdminFlash(project ? "Project updated." : "Project created.");
     router.push(`/admin/${section.slug}`);
     router.refresh();
   }
@@ -220,6 +222,7 @@ export function AdminProjectForm({
       return;
     }
 
+    setAdminFlash("Project deleted.");
     router.push(`/admin/${section.slug}`);
     router.refresh();
   }

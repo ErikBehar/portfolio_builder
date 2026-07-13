@@ -11,6 +11,7 @@ import {
   type HomeSectionConfig,
   type TimelineDisplayMode,
 } from "@/lib/homeLayout";
+import { setAdminFlash } from "@/lib/adminFlash";
 import type { SiteSettings } from "@/lib/siteSettings";
 
 type AdminSiteSettingsFormProps = {
@@ -128,6 +129,7 @@ export function AdminSiteSettingsForm({ settings }: AdminSiteSettingsFormProps) 
     setSiteTitleColor(data.siteTitleColor ?? DEFAULT_SITE_TITLE_COLOR);
     setHomeLayout(data.homeLayout ?? DEFAULT_HOME_LAYOUT);
     setStatus("Saved.");
+    setAdminFlash("Site settings saved.");
     router.refresh();
   }
 

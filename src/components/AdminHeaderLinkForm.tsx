@@ -7,6 +7,7 @@ import {
   HEADER_LINK_ICONS,
   type HeaderLinkIconSlug,
 } from "@/lib/headerLinkIcons";
+import { setAdminFlash } from "@/lib/adminFlash";
 import type { HeaderLink } from "@/lib/headerLinks";
 
 type AdminHeaderLinkFormProps = {
@@ -44,6 +45,7 @@ export function AdminHeaderLinkForm({ link }: AdminHeaderLinkFormProps) {
       return;
     }
 
+    setAdminFlash(link ? "Header link updated." : "Header link created.");
     router.push("/admin/header-links");
     router.refresh();
   }
@@ -62,6 +64,7 @@ export function AdminHeaderLinkForm({ link }: AdminHeaderLinkFormProps) {
       return;
     }
 
+    setAdminFlash("Header link deleted.");
     router.push("/admin/header-links");
     router.refresh();
   }

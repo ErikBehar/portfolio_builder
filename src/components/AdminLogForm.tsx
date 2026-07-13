@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { DatePicker } from "@/components/DatePicker";
 import { todayInputValue, toDateInputValue } from "@/lib/dates";
 import { uploadMediaFiles, type MediaDraft } from "@/lib/clientUpload";
+import { setAdminFlash } from "@/lib/adminFlash";
 import type { LogEntryWithMedia } from "@/lib/types";
 
 type AdminLogFormProps = {
@@ -78,6 +79,7 @@ export function AdminLogForm({ entry }: AdminLogFormProps) {
       return;
     }
 
+    setAdminFlash(entry ? "Log entry updated." : "Log entry created.");
     router.push("/admin/log");
     router.refresh();
   }
@@ -94,6 +96,7 @@ export function AdminLogForm({ entry }: AdminLogFormProps) {
       return;
     }
 
+    setAdminFlash("Log entry deleted.");
     router.push("/admin/log");
     router.refresh();
   }

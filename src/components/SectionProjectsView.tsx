@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ProjectGrid } from "@/components/ProjectGrid";
+import { usePersistedLabelFilters } from "@/hooks/usePersistedLabelFilters";
 import { projectMatchesLabels } from "@/lib/labelFilter";
 import type { Section } from "@/lib/sections";
 import { SHOW_LABEL_SLUG, type ProjectLabel, type ProjectWithMedia } from "@/lib/types";
@@ -13,6 +13,8 @@ type SectionProjectsViewProps = {
   allLabels: ProjectLabel[];
   labelCounts: Record<string, number>;
 };
+
+const SECTION_DEFAULT_LABELS = [SHOW_LABEL_SLUG];
 
 function getLabelFontSize(count: number, maxCount: number): string {
   if (maxCount <= 0) return "0.875rem";
@@ -28,18 +30,11 @@ export function SectionProjectsView({
   allLabels,
   labelCounts,
 }: SectionProjectsViewProps) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-
-  const selectedSlugs = useMemo(() => {
-    const fromUrl = searchParams.get("labels");
-    if (fromUrl === "none") return [];
-    if (fromUrl) {
-      return fromUrl.split(",").filter(Boolean);
-    }
-    return [SHOW_LABEL_SLUG];
-  }, [searchParams]);
+  const { selectedSlugs, toggleLabel } = usePersistedLabelFilters({
+    scope: `section:${section.slug}`,
+    defaultSlugs: SECTION_DEFAULT_LABELS,
+    emptyMeansNone: true,
+  });
 
   const maxCount = Math.max(0, ...Object.values(labelCounts));
 
@@ -61,21 +56,6 @@ export function SectionProjectsView({
         ),
       }))
     : null;
-
-  function toggleLabel(slug: string) {
-    const next = selectedSlugs.includes(slug)
-      ? selectedSlugs.filter((entry) => entry !== slug)
-      : [...selectedSlugs, slug];
-
-    const params = new URLSearchParams(searchParams.toString());
-    if (next.length === 0) {
-      params.set("labels", "none");
-    } else {
-      params.set("labels", next.join(","));
-    }
-    const query = params.toString();
-    router.replace(`${pathname}?${query}`, { scroll: false });
-  }
 
   return (
     <div className="space-y-8">
@@ -111,34 +91,23 @@ export function SectionProjectsView({
       </section>
 
       {grouped ? (
-        <div className="space-y-12">
-          {grouped
-            .filter((group) => group.projects.length > 0)
-            .map((group) => (
+        <div className="space-y-10">
+          {grouped.map((group) => (
             <section key={group.slug}>
-              <h2 className="mb-6 text-xl font-medium">{group.title}</h2>
-              <ProjectGrid projects={group.projects} />
-            </section>
-          ))}
-
-          {filteredProjects.some((project) => !project.category) && (
-            <section>
-              <h2 className="mb-6 text-xl font-medium">Other</h2>
+              <h2 className="mb-4 text-xl font-semibold">{group.title}</h2>
               <ProjectGrid
-                projects={filteredProjects.filter((project) => !project.category)}
+                projects={group.projects}
+                emptyMessage={
+                  filteredProjects.length === 0
+                    ? emptyMessage
+                    : `No projects in ${group.title}.`
+                }
               />
             </section>
-          )}
-
-          {filteredProjects.length === 0 && (
-            <ProjectGrid projects={[]} emptyMessage={emptyMessage} />
-          )}
+          ))}
         </div>
       ) : (
-        <ProjectGrid
-          projects={filteredProjects}
-          emptyMessage={emptyMessage}
-        />
+        <ProjectGrid projects={filteredProjects} emptyMessage={emptyMessage} />
       )}
     </div>
   );

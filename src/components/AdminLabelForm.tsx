@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { setAdminFlash } from "@/lib/adminFlash";
 import type { ProjectLabel } from "@/lib/types";
 
 type AdminLabelFormProps = {
@@ -34,6 +35,7 @@ export function AdminLabelForm({ label }: AdminLabelFormProps) {
       return;
     }
 
+    setAdminFlash(label ? "Label updated." : "Label created.");
     router.push("/admin/labels");
     router.refresh();
   }
@@ -50,6 +52,7 @@ export function AdminLabelForm({ label }: AdminLabelFormProps) {
       return;
     }
 
+    setAdminFlash("Label deleted.");
     router.push("/admin/labels");
     router.refresh();
   }

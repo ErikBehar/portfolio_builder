@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { setAdminFlash } from "@/lib/adminFlash";
+
 export function AdminBackupPanel() {
   const [status, setStatus] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -36,6 +38,7 @@ export function AdminBackupPanel() {
       anchor.click();
       URL.revokeObjectURL(url);
       setStatus("Backup downloaded.");
+      setAdminFlash("Backup downloaded.");
     } catch {
       setStatus("Failed to create backup");
     } finally {

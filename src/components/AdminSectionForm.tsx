@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Section, SectionCategory } from "@/lib/sections";
+import { setAdminFlash } from "@/lib/adminFlash";
 import { DEFAULT_SECTION_COLOR } from "@/lib/sectionConstants";
 
 type AdminSectionFormProps = {
@@ -77,6 +78,7 @@ export function AdminSectionForm({ section }: AdminSectionFormProps) {
       return;
     }
 
+    setAdminFlash(section ? "Section updated." : "Section created.");
     router.push("/admin/sections");
     router.refresh();
   }
@@ -96,6 +98,7 @@ export function AdminSectionForm({ section }: AdminSectionFormProps) {
       return;
     }
 
+    setAdminFlash("Section deleted.");
     router.push("/admin/sections");
     router.refresh();
   }
