@@ -28,6 +28,7 @@ model SiteSettings {
   projectCommentsEnabled Boolean  @default(true)
   homeHeaderColor        String   @default("#5b9fd4")
   siteTitleColor         String   @default("#e8edf5")
+  adminSessionVersion    Int      @default(1)
   updatedAt              DateTime @updatedAt
 }
 

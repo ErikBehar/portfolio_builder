@@ -167,13 +167,7 @@ export async function getProjectCountsBySection() {
 }
 
 export async function getProjectsForTimeline() {
-  await ensureSystemLabels();
-  const showLabel = await ensureShowLabel();
-
   const projects = await prisma.project.findMany({
-    where: {
-      labels: { some: { labelId: showLabel.id } },
-    },
     include: projectInclude,
     orderBy: { createdAt: "asc" },
   });

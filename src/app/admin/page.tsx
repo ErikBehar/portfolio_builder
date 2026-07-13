@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AdminLogoutButton } from "@/components/AdminLogoutButton";
 import { getProjectCountsBySection } from "@/lib/projects";
 import { getSections } from "@/lib/sections";
 
@@ -8,15 +9,18 @@ export default async function AdminHomePage() {
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-12">
-      <header className="mb-10">
-        <p className="mb-2 text-sm uppercase tracking-[0.2em] text-accent">
-          Admin
-        </p>
-        <h1 className="text-3xl font-semibold tracking-tight">Manage portfolio</h1>
-        <p className="mt-4 max-w-2xl text-muted">
-          Manage your home page log, portfolio sections, and the projects inside
-          each section.
-        </p>
+      <header className="mb-10 flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="mb-2 text-sm uppercase tracking-[0.2em] text-accent">
+            Admin
+          </p>
+          <h1 className="text-3xl font-semibold tracking-tight">Manage portfolio</h1>
+          <p className="mt-4 max-w-2xl text-muted">
+            Manage your home page log, portfolio sections, and the projects inside
+            each section.
+          </p>
+        </div>
+        <AdminLogoutButton />
       </header>
 
       <div className="mb-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

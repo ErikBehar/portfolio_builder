@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { COOKIE_NAME, verifyAdminToken } from "@/lib/auth";
+import { COOKIE_NAME } from "@/lib/authConstants";
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -9,21 +9,28 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-pathname", pathname);
+
   if (pathname === "/admin/login") {
-    return NextResponse.next();
+    return NextResponse.next({
+      request: { headers: requestHeaders },
+    });
   }
 
-  const token = request.cookies.get(COOKIE_NAME)?.value;
-
-  if (await verifyAdminToken(token)) {
-    return NextResponse.next();
+  // Cookie presence only — full session verification (with DB-backed
+  // version) happens in the admin layout / API requireAdmin checks.
+  if (!request.cookies.get(COOKIE_NAME)?.value) {
+    const loginUrl = new URL("/admin/login", request.url);
+    loginUrl.searchParams.set("from", pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
-  const loginUrl = new URL("/admin/login", request.url);
-  loginUrl.searchParams.set("from", pathname);
-  return NextResponse.redirect(loginUrl);
+  return NextResponse.next({
+    request: { headers: requestHeaders },
+  });
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/admin", "/admin/:path*"],
 };

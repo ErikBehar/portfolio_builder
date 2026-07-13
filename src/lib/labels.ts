@@ -150,7 +150,7 @@ export async function deleteLabel(id: string) {
 }
 
 async function getLabelUsageCounts(
-  where: Parameters<typeof prisma.projectLabel.groupBy>[0]["where"]
+  where?: Parameters<typeof prisma.projectLabel.groupBy>[0]["where"]
 ) {
   await ensureSystemLabels();
 
@@ -179,10 +179,5 @@ export async function getLabelUsageCountsForSection(section: string) {
 }
 
 export async function getLabelUsageCountsForTimeline() {
-  const showLabel = await ensureShowLabel();
-  return getLabelUsageCounts({
-    project: {
-      labels: { some: { labelId: showLabel.id } },
-    },
-  });
+  return getLabelUsageCounts();
 }

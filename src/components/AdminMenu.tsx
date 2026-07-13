@@ -1,16 +1,20 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 export function AdminMenu() {
   const router = useRouter();
+  const pathname = usePathname();
   const menuRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const isAdminArea =
+    pathname.startsWith("/admin") && pathname !== "/admin/login";
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -49,6 +53,19 @@ export function AdminMenu() {
     setShowPassword(false);
     setPassword("");
     router.push("/admin");
+    router.refresh();
+  }
+
+  async function handleLogout() {
+    setLoading(true);
+    setError(null);
+
+    await fetch("/api/admin/auth", { method: "DELETE" });
+
+    setLoading(false);
+    setOpen(false);
+    router.push("/");
+    router.refresh();
   }
 
   return (
@@ -88,7 +105,16 @@ export function AdminMenu() {
 
       {open && (
         <div className="absolute right-0 top-full z-50 mt-2 w-64 rounded-xl border border-border bg-surface p-3 shadow-xl">
-          {!showPassword ? (
+          {isAdminArea ? (
+            <button
+              type="button"
+              onClick={handleLogout}
+              disabled={loading}
+              className="w-full rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-surface-elevated disabled:opacity-60"
+            >
+              {loading ? "Logging out..." : "Log out"}
+            </button>
+          ) : !showPassword ? (
             <button
               type="button"
               onClick={() => setShowPassword(true)}

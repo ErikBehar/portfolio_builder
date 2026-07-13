@@ -59,17 +59,10 @@ export const DEFAULT_SECTIONS = [
     sortOrder: 3,
   },
   {
-    slug: "visual-novels",
-    title: "Visual Novels",
-    description: "Visual novel projects and related work.",
-    categories: [],
-    sortOrder: 4,
-  },
-  {
     slug: "animation",
     title: "Animation",
     description: "Animation work, shorts, and motion design.",
     categories: [],
-    sortOrder: 5,
+    sortOrder: 4,
   },
 ];

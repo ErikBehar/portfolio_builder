@@ -45,7 +45,7 @@ export default async function TimelinePage() {
           Project timeline
         </h1>
         <p className="mt-4 text-lg text-muted">
-          All visible projects across sections, ordered by created date.
+          All projects across sections, ordered by created date.
         </p>
       </header>
 

@@ -7,7 +7,7 @@ import { formatLogDate } from "@/lib/dates";
 import { projectMatchesLabels } from "@/lib/labelFilter";
 import { getProjectCoverMedia } from "@/lib/media";
 import { RichText } from "@/components/RichText";
-import { SHOW_LABEL_SLUG, type ProjectLabel, type ProjectWithMedia } from "@/lib/types";
+import type { ProjectLabel, ProjectWithMedia } from "@/lib/types";
 
 export type TimelineEntry = {
   project: ProjectWithMedia;
@@ -44,11 +44,10 @@ const LANE_HEIGHT = 52;
 const AXIS_HEIGHT = 72;
 const MARKER_SIZE = 14;
 const MIN_MARKER_GAP = 28;
-const TIMELINE_SIDE_PADDING = 80;
-const MIN_PX_PER_MONTH = 12;
+const TIMELINE_SIDE_PADDING = 48;
 const MIN_PX_PER_MONTH_FOR_MONTH_LABELS = 40;
 const ZOOM_STEP = 1.25;
-const MIN_ZOOM_MULTIPLIER = 0.5;
+const MIN_ZOOM_MULTIPLIER = 0.25;
 const MAX_ZOOM_MULTIPLIER = 4;
 
 function getLabelFontSize(count: number, maxCount: number): string {
@@ -132,6 +131,8 @@ type TimelineTick = {
 
 function buildTicks(start: Date, end: Date, pxPerMonth: number): TimelineTick[] {
   const showMonthLabels = pxPerMonth >= MIN_PX_PER_MONTH_FOR_MONTH_LABELS;
+  // Keep year labels readable when the range is compressed to fit.
+  const yearLabelStride = Math.max(1, Math.ceil(36 / Math.max(pxPerMonth * 12, 1)));
   const ticks: TimelineTick[] = [];
   const cursor = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), 1));
 
@@ -139,11 +140,12 @@ function buildTicks(start: Date, end: Date, pxPerMonth: number): TimelineTick[] 
     const x = dateToX(cursor, start, pxPerMonth);
 
     if (cursor.getUTCMonth() === 0) {
+      const year = cursor.getUTCFullYear();
       ticks.push({
         x,
         type: "year",
-        label: String(cursor.getUTCFullYear()),
-        showLabel: true,
+        label: String(year),
+        showLabel: year % yearLabelStride === 0,
       });
     } else {
       ticks.push({
@@ -180,18 +182,17 @@ export function ProjectTimeline({
 
   const selectedSlugs = useMemo(() => {
     const fromUrl = searchParams.get("labels");
-    if (fromUrl === "none") return [];
-    if (fromUrl) {
-      return fromUrl.split(",").filter(Boolean);
-    }
-    return [SHOW_LABEL_SLUG];
+    if (!fromUrl || fromUrl === "none") return [];
+    return fromUrl.split(",").filter(Boolean);
   }, [searchParams]);
 
   const filteredEntries = useMemo(
     () =>
-      entries.filter((entry) =>
-        projectMatchesLabels(entry.project, selectedSlugs)
-      ),
+      selectedSlugs.length === 0
+        ? entries
+        : entries.filter((entry) =>
+            projectMatchesLabels(entry.project, selectedSlugs)
+          ),
     [entries, selectedSlugs]
   );
 
@@ -232,11 +233,12 @@ export function ProjectTimeline({
   const fitPxPerMonth = useMemo(() => {
     if (!timelineRange || containerWidth <= 0) return null;
 
-    const availableWidth = Math.max(containerWidth - TIMELINE_SIDE_PADDING, 240);
-    return Math.max(
-      MIN_PX_PER_MONTH,
-      availableWidth / timelineRange.monthsSpan
+    // True fit: span the full date range inside the visible width (no min clamp).
+    const availableWidth = Math.max(
+      containerWidth - TIMELINE_SIDE_PADDING * 2,
+      120
     );
+    return availableWidth / timelineRange.monthsSpan;
   }, [containerWidth, timelineRange]);
 
   const pxPerMonth =
@@ -249,16 +251,24 @@ export function ProjectTimeline({
     const positioned = assignLanes(
       filteredEntries.map((entry) => ({
         entry,
-        x: dateToX(projectDate(entry.project), timelineRange.start, pxPerMonth),
+        x:
+          TIMELINE_SIDE_PADDING +
+          dateToX(projectDate(entry.project), timelineRange.start, pxPerMonth),
       }))
     );
 
     const maxLane = positioned.reduce((max, item) => Math.max(max, item.lane), 0);
-    const totalWidth = Math.max(
-      dateToX(timelineRange.end, timelineRange.start, pxPerMonth) + TIMELINE_SIDE_PADDING,
-      containerWidth || 720
+    const contentWidth =
+      TIMELINE_SIDE_PADDING * 2 +
+      dateToX(timelineRange.end, timelineRange.start, pxPerMonth);
+    // At 100% zoom this equals containerWidth; when zoomed in, allow scroll.
+    const totalWidth = Math.max(contentWidth, containerWidth || 0);
+    const ticks = buildTicks(timelineRange.start, timelineRange.end, pxPerMonth).map(
+      (tick) => ({
+        ...tick,
+        x: tick.x + TIMELINE_SIDE_PADDING,
+      })
     );
-    const ticks = buildTicks(timelineRange.start, timelineRange.end, pxPerMonth);
 
     return {
       positioned,
@@ -276,7 +286,7 @@ export function ProjectTimeline({
 
     const params = new URLSearchParams(searchParams.toString());
     if (next.length === 0) {
-      params.set("labels", "none");
+      params.delete("labels");
     } else {
       params.set("labels", next.join(","));
     }
@@ -296,10 +306,7 @@ export function ProjectTimeline({
     );
   }
 
-  const emptyMessage =
-    selectedSlugs.length === 0
-      ? "Select one or more labels to show projects."
-      : "No projects match the selected labels.";
+  const emptyMessage = "No projects match the selected labels.";
 
   const hovered = layout?.positioned.find((item) => item.project.id === hoveredId);
   const hoveredCover = hovered ? getProjectCoverMedia(hovered.project) : undefined;
@@ -385,9 +392,7 @@ export function ProjectTimeline({
 
       {!timelineRange ? (
         <div className="rounded-xl border border-dashed border-border bg-surface p-10 text-center text-muted">
-          {entries.length === 0
-            ? "No visible projects yet. Projects need the Show label to appear here."
-            : emptyMessage}
+          {entries.length === 0 ? "No projects yet." : emptyMessage}
         </div>
       ) : (
         <div ref={timelineContainerRef} className="w-full">
@@ -465,10 +470,14 @@ export function ProjectTimeline({
                 >
                   {tick.type === "year" ? (
                     <>
-                      <span className="mb-2 text-xs font-medium text-foreground">
-                        {tick.label}
-                      </span>
-                      <div className="h-8 w-px bg-accent" />
+                      {tick.showLabel && (
+                        <span className="mb-2 text-xs font-medium text-foreground">
+                          {tick.label}
+                        </span>
+                      )}
+                      <div
+                        className={`w-px bg-accent ${tick.showLabel ? "h-8" : "h-5"}`}
+                      />
                     </>
                   ) : (
                     <>
