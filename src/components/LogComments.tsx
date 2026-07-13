@@ -5,13 +5,17 @@ type LogCommentsProps = {
   logEntryId: string;
   initialComments: LogComment[];
   commentsEnabled: boolean;
+  commentsVisible: boolean;
 };
 
 export function LogComments({
   logEntryId,
   initialComments,
   commentsEnabled,
+  commentsVisible,
 }: LogCommentsProps) {
+  if (!commentsVisible) return null;
+
   return (
     <CommentsSection
       apiBasePath={`/api/log/${logEntryId}/comments`}

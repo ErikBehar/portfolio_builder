@@ -95,6 +95,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
         projectId={project.id}
         initialComments={project.comments ?? []}
         commentsEnabled={siteSettings.projectCommentsEnabled}
+        commentsVisible={siteSettings.projectCommentsVisible}
       />
 
       <p className="mt-10 text-sm text-muted">

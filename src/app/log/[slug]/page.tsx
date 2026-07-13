@@ -48,6 +48,7 @@ export default async function LogEntryPage({ params }: LogEntryPageProps) {
         logEntryId={entry.id}
         initialComments={entry.comments ?? []}
         commentsEnabled={siteSettings.commentsEnabled}
+        commentsVisible={siteSettings.commentsVisible}
       />
 
       <p className="mt-10 text-sm text-muted">

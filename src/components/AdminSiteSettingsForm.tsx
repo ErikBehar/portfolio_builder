@@ -4,6 +4,13 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DEFAULT_SECTION_COLOR } from "@/lib/sectionConstants";
 import { DEFAULT_SITE_TITLE_COLOR } from "@/lib/siteConstants";
+import {
+  DEFAULT_HOME_LAYOUT,
+  HOME_SECTION_LABELS,
+  type HomeLayout,
+  type HomeSectionConfig,
+  type TimelineDisplayMode,
+} from "@/lib/homeLayout";
 import type { SiteSettings } from "@/lib/siteSettings";
 
 type AdminSiteSettingsFormProps = {
@@ -21,11 +28,20 @@ export function AdminSiteSettingsForm({ settings }: AdminSiteSettingsFormProps) 
   const [projectCommentsEnabled, setProjectCommentsEnabled] = useState(
     settings.projectCommentsEnabled ?? true
   );
+  const [commentsVisible, setCommentsVisible] = useState(
+    settings.commentsVisible ?? true
+  );
+  const [projectCommentsVisible, setProjectCommentsVisible] = useState(
+    settings.projectCommentsVisible ?? true
+  );
   const [homeHeaderColor, setHomeHeaderColor] = useState(
     settings.homeHeaderColor ?? DEFAULT_SECTION_COLOR
   );
   const [siteTitleColor, setSiteTitleColor] = useState(
     settings.siteTitleColor ?? DEFAULT_SITE_TITLE_COLOR
+  );
+  const [homeLayout, setHomeLayout] = useState<HomeLayout>(
+    settings.homeLayout ?? DEFAULT_HOME_LAYOUT
   );
   const [status, setStatus] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -36,9 +52,40 @@ export function AdminSiteSettingsForm({ settings }: AdminSiteSettingsFormProps) 
     setFooterText(settings.footerText ?? "");
     setCommentsEnabled(settings.commentsEnabled ?? true);
     setProjectCommentsEnabled(settings.projectCommentsEnabled ?? true);
+    setCommentsVisible(settings.commentsVisible ?? true);
+    setProjectCommentsVisible(settings.projectCommentsVisible ?? true);
     setHomeHeaderColor(settings.homeHeaderColor ?? DEFAULT_SECTION_COLOR);
     setSiteTitleColor(settings.siteTitleColor ?? DEFAULT_SITE_TITLE_COLOR);
+    setHomeLayout(settings.homeLayout ?? DEFAULT_HOME_LAYOUT);
   }, [settings]);
+
+  function moveSection(index: number, direction: -1 | 1) {
+    setHomeLayout((current) => {
+      const nextIndex = index + direction;
+      if (nextIndex < 0 || nextIndex >= current.sections.length) {
+        return current;
+      }
+      const sections = [...current.sections];
+      const [item] = sections.splice(index, 1);
+      sections.splice(nextIndex, 0, item);
+      return { ...current, sections };
+    });
+  }
+
+  function toggleSectionVisible(id: HomeSectionConfig["id"]) {
+    setHomeLayout((current) => ({
+      ...current,
+      sections: current.sections.map((section) =>
+        section.id === id
+          ? { ...section, visible: !section.visible }
+          : section
+      ),
+    }));
+  }
+
+  function setTimelineMode(timelineMode: TimelineDisplayMode) {
+    setHomeLayout((current) => ({ ...current, timelineMode }));
+  }
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -54,8 +101,11 @@ export function AdminSiteSettingsForm({ settings }: AdminSiteSettingsFormProps) 
         footerText,
         commentsEnabled,
         projectCommentsEnabled,
+        commentsVisible,
+        projectCommentsVisible,
         homeHeaderColor,
         siteTitleColor,
+        homeLayout,
       }),
     });
 
@@ -72,8 +122,11 @@ export function AdminSiteSettingsForm({ settings }: AdminSiteSettingsFormProps) 
     setFooterText(data.footerText ?? "");
     setCommentsEnabled(data.commentsEnabled ?? true);
     setProjectCommentsEnabled(data.projectCommentsEnabled ?? true);
+    setCommentsVisible(data.commentsVisible ?? true);
+    setProjectCommentsVisible(data.projectCommentsVisible ?? true);
     setHomeHeaderColor(data.homeHeaderColor ?? DEFAULT_SECTION_COLOR);
     setSiteTitleColor(data.siteTitleColor ?? DEFAULT_SITE_TITLE_COLOR);
+    setHomeLayout(data.homeLayout ?? DEFAULT_HOME_LAYOUT);
     setStatus("Saved.");
     router.refresh();
   }
@@ -167,6 +220,96 @@ export function AdminSiteSettingsForm({ settings }: AdminSiteSettingsFormProps) 
         </p>
       </label>
 
+      <fieldset className="space-y-3 rounded-xl border border-border bg-surface p-4">
+        <legend className="px-1 text-sm font-medium">Homepage sections</legend>
+        <p className="text-sm text-muted">
+          Choose which blocks appear on the homepage and their order from top to
+          bottom.
+        </p>
+        <ul className="space-y-2">
+          {homeLayout.sections.map((section, index) => (
+            <li
+              key={section.id}
+              className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-background px-3 py-2"
+            >
+              <label className="flex min-w-0 flex-1 items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={section.visible}
+                  onChange={() => toggleSectionVisible(section.id)}
+                />
+                <span className="text-sm font-medium">
+                  {HOME_SECTION_LABELS[section.id]}
+                </span>
+              </label>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => moveSection(index, -1)}
+                  disabled={index === 0}
+                  className="rounded-md border border-border px-2 py-1 text-sm transition-colors hover:border-accent disabled:opacity-40"
+                  aria-label={`Move ${HOME_SECTION_LABELS[section.id]} up`}
+                >
+                  ↑
+                </button>
+                <button
+                  type="button"
+                  onClick={() => moveSection(index, 1)}
+                  disabled={index === homeLayout.sections.length - 1}
+                  className="rounded-md border border-border px-2 py-1 text-sm transition-colors hover:border-accent disabled:opacity-40"
+                  aria-label={`Move ${HOME_SECTION_LABELS[section.id]} down`}
+                >
+                  ↓
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+
+        <div className="space-y-2 border-t border-border pt-3">
+          <p className="text-sm font-medium">Timeline on homepage</p>
+          <div className="flex flex-wrap gap-4">
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="radio"
+                name="timelineMode"
+                checked={homeLayout.timelineMode === "link"}
+                onChange={() => setTimelineMode("link")}
+              />
+              Link to timeline page
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="radio"
+                name="timelineMode"
+                checked={homeLayout.timelineMode === "embed"}
+                onChange={() => setTimelineMode("embed")}
+              />
+              Show timeline on homepage
+            </label>
+          </div>
+          <p className="text-sm text-muted">
+            Only applies when Timeline is visible above.
+          </p>
+        </div>
+      </fieldset>
+
+      <label className="flex items-start gap-3 rounded-xl border border-border bg-surface px-4 py-3">
+        <input
+          type="checkbox"
+          checked={commentsVisible}
+          onChange={(event) => setCommentsVisible(event.target.checked)}
+          className="mt-1"
+        />
+        <span className="space-y-1">
+          <span className="block text-sm font-medium">Show log comments</span>
+          <span className="block text-sm text-muted">
+            When disabled, the comments section is hidden on public log pages.
+            Admins can still manage comments from the admin panel.
+          </span>
+        </span>
+      </label>
+
       <label className="flex items-start gap-3 rounded-xl border border-border bg-surface px-4 py-3">
         <input
           type="checkbox"
@@ -175,10 +318,26 @@ export function AdminSiteSettingsForm({ settings }: AdminSiteSettingsFormProps) 
           className="mt-1"
         />
         <span className="space-y-1">
-          <span className="block text-sm font-medium">Enable log comments</span>
+          <span className="block text-sm font-medium">Allow new log comments</span>
           <span className="block text-sm text-muted">
-            When disabled, visitors can read existing comments but cannot post
-            new ones on log entries.
+            When disabled, visitors can still read existing comments (if shown)
+            but cannot post new ones on log entries.
+          </span>
+        </span>
+      </label>
+
+      <label className="flex items-start gap-3 rounded-xl border border-border bg-surface px-4 py-3">
+        <input
+          type="checkbox"
+          checked={projectCommentsVisible}
+          onChange={(event) => setProjectCommentsVisible(event.target.checked)}
+          className="mt-1"
+        />
+        <span className="space-y-1">
+          <span className="block text-sm font-medium">Show project comments</span>
+          <span className="block text-sm text-muted">
+            When disabled, the comments section is hidden on public project
+            pages. Admins can still manage comments from the admin panel.
           </span>
         </span>
       </label>
@@ -191,10 +350,12 @@ export function AdminSiteSettingsForm({ settings }: AdminSiteSettingsFormProps) 
           className="mt-1"
         />
         <span className="space-y-1">
-          <span className="block text-sm font-medium">Enable project comments</span>
+          <span className="block text-sm font-medium">
+            Allow new project comments
+          </span>
           <span className="block text-sm text-muted">
-            When disabled, visitors can read existing comments but cannot post
-            new ones on project pages.
+            When disabled, visitors can still read existing comments (if shown)
+            but cannot post new ones on project pages.
           </span>
         </span>
       </label>

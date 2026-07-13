@@ -26,9 +26,12 @@ model SiteSettings {
   footerText             String   @default("")
   commentsEnabled        Boolean  @default(true)
   projectCommentsEnabled Boolean  @default(true)
+  commentsVisible        Boolean  @default(true)
+  projectCommentsVisible Boolean  @default(true)
   homeHeaderColor        String   @default("#5b9fd4")
   siteTitleColor         String   @default("#e8edf5")
   adminSessionVersion    Int      @default(1)
+  homeLayout             String   @default("{\"sections\":[{\"id\":\"log\",\"visible\":true},{\"id\":\"featured\",\"visible\":true},{\"id\":\"projects\",\"visible\":true},{\"id\":\"timeline\",\"visible\":true}],\"timelineMode\":\"link\"}")
   updatedAt              DateTime @updatedAt
 }
 

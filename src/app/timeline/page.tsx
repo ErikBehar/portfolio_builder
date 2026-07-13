@@ -1,39 +1,13 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { ProjectTimeline } from "@/components/ProjectTimeline";
-import { getLabelUsageCountsForTimeline, getLabels } from "@/lib/labels";
-import { getProjectsForTimeline } from "@/lib/projects";
-import { getSections } from "@/lib/sections";
+import { getTimelinePageData } from "@/lib/timelineData";
 
 export const dynamic = "force-dynamic";
 
 export default async function TimelinePage() {
-  const [projects, sections, allLabels, labelCounts] = await Promise.all([
-    getProjectsForTimeline(),
-    getSections(),
-    getLabels(),
-    getLabelUsageCountsForTimeline(),
-  ]);
-
-  const sectionBySlug = Object.fromEntries(
-    sections.map((section) => [section.slug, section])
-  );
-
-  const entries = projects.map((project) => {
-    const section = sectionBySlug[project.section];
-
-    return {
-      project,
-      sectionTitle: section?.title ?? project.section,
-      sectionColor: section?.color ?? "#5b9fd4",
-    };
-  });
-
-  const sectionLegend = sections.map((section) => ({
-    slug: section.slug,
-    title: section.title,
-    color: section.color,
-  }));
+  const { entries, sectionLegend, allLabels, labelCounts } =
+    await getTimelinePageData();
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-12">

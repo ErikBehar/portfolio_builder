@@ -6,8 +6,19 @@ export const DEFAULT_SITE_SETTINGS = {
   footerText: "",
   commentsEnabled: true,
   projectCommentsEnabled: true,
+  commentsVisible: true,
+  projectCommentsVisible: true,
   homeHeaderColor: "#5b9fd4",
   siteTitleColor: "#e8edf5",
+  homeLayout: JSON.stringify({
+    sections: [
+      { id: "log", visible: true },
+      { id: "featured", visible: true },
+      { id: "projects", visible: true },
+      { id: "timeline", visible: true },
+    ],
+    timelineMode: "link",
+  }),
 };
 
 export const DEFAULT_HEADER_LINKS = [

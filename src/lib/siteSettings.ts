@@ -1,6 +1,13 @@
 import { unstable_noStore as noStore } from "next/cache";
 import { prisma } from "@/lib/db";
 import { ApiError } from "@/lib/apiErrors";
+import {
+  DEFAULT_HOME_LAYOUT,
+  parseHomeLayout,
+  serializeHomeLayout,
+  validateHomeLayoutInput,
+  type HomeLayout,
+} from "@/lib/homeLayout";
 import { DEFAULT_SITE_TITLE_COLOR } from "@/lib/siteConstants";
 import { DEFAULT_SECTION_COLOR } from "@/lib/sectionConstants";
 import { normalizeSectionColor, validateSectionColor } from "@/lib/sectionValidation";
@@ -13,8 +20,11 @@ export const DEFAULT_SITE_SETTINGS = {
   footerText: "",
   commentsEnabled: true,
   projectCommentsEnabled: true,
+  commentsVisible: true,
+  projectCommentsVisible: true,
   homeHeaderColor: DEFAULT_SECTION_COLOR,
   siteTitleColor: DEFAULT_SITE_TITLE_COLOR,
+  homeLayout: DEFAULT_HOME_LAYOUT,
 };
 
 export type SiteSettings = {
@@ -24,8 +34,11 @@ export type SiteSettings = {
   footerText: string;
   commentsEnabled: boolean;
   projectCommentsEnabled: boolean;
+  commentsVisible: boolean;
+  projectCommentsVisible: boolean;
   homeHeaderColor: string;
   siteTitleColor: string;
+  homeLayout: HomeLayout;
   updatedAt: string;
 };
 
@@ -35,8 +48,11 @@ export function validateSiteSettingsInput(body: {
   footerText?: string;
   commentsEnabled?: boolean;
   projectCommentsEnabled?: boolean;
+  commentsVisible?: boolean;
+  projectCommentsVisible?: boolean;
   homeHeaderColor?: string;
   siteTitleColor?: string;
+  homeLayout?: unknown;
 }): string | null {
   if (!body.title?.trim()) return "Site title is required";
   if (!body.description?.trim()) return "Site description is required";
@@ -55,6 +71,18 @@ export function validateSiteSettingsInput(body: {
   ) {
     return "Project comments enabled must be true or false";
   }
+  if (
+    body.commentsVisible !== undefined &&
+    typeof body.commentsVisible !== "boolean"
+  ) {
+    return "Comments visible must be true or false";
+  }
+  if (
+    body.projectCommentsVisible !== undefined &&
+    typeof body.projectCommentsVisible !== "boolean"
+  ) {
+    return "Project comments visible must be true or false";
+  }
   if (body.homeHeaderColor !== undefined && body.homeHeaderColor.trim()) {
     const colorError = validateSectionColor(body.homeHeaderColor.trim());
     if (colorError) return colorError;
@@ -62,6 +90,10 @@ export function validateSiteSettingsInput(body: {
   if (body.siteTitleColor !== undefined && body.siteTitleColor.trim()) {
     const colorError = validateSectionColor(body.siteTitleColor.trim());
     if (colorError) return colorError;
+  }
+  if (body.homeLayout !== undefined) {
+    const layout = validateHomeLayoutInput(body.homeLayout);
+    if (typeof layout === "string") return layout;
   }
   return null;
 }
@@ -84,8 +116,11 @@ export async function ensureDefaultSiteSettings() {
       existing.footerText == null ||
       existing.commentsEnabled == null ||
       existing.projectCommentsEnabled == null ||
+      existing.commentsVisible == null ||
+      existing.projectCommentsVisible == null ||
       existing.homeHeaderColor == null ||
-      existing.siteTitleColor == null;
+      existing.siteTitleColor == null ||
+      existing.homeLayout == null;
 
     if (needsBackfill) {
       await prisma.siteSettings.update({
@@ -97,10 +132,18 @@ export async function ensureDefaultSiteSettings() {
           projectCommentsEnabled:
             existing.projectCommentsEnabled ??
             DEFAULT_SITE_SETTINGS.projectCommentsEnabled,
+          commentsVisible:
+            existing.commentsVisible ?? DEFAULT_SITE_SETTINGS.commentsVisible,
+          projectCommentsVisible:
+            existing.projectCommentsVisible ??
+            DEFAULT_SITE_SETTINGS.projectCommentsVisible,
           homeHeaderColor:
             existing.homeHeaderColor ?? DEFAULT_SITE_SETTINGS.homeHeaderColor,
           siteTitleColor:
             existing.siteTitleColor ?? DEFAULT_SITE_SETTINGS.siteTitleColor,
+          homeLayout:
+            existing.homeLayout ??
+            serializeHomeLayout(DEFAULT_SITE_SETTINGS.homeLayout),
         },
       });
     }
@@ -116,8 +159,11 @@ export async function ensureDefaultSiteSettings() {
       footerText: DEFAULT_SITE_SETTINGS.footerText,
       commentsEnabled: DEFAULT_SITE_SETTINGS.commentsEnabled,
       projectCommentsEnabled: DEFAULT_SITE_SETTINGS.projectCommentsEnabled,
+      commentsVisible: DEFAULT_SITE_SETTINGS.commentsVisible,
+      projectCommentsVisible: DEFAULT_SITE_SETTINGS.projectCommentsVisible,
       homeHeaderColor: DEFAULT_SITE_SETTINGS.homeHeaderColor,
       siteTitleColor: DEFAULT_SITE_SETTINGS.siteTitleColor,
+      homeLayout: serializeHomeLayout(DEFAULT_SITE_SETTINGS.homeLayout),
     },
   });
 }
@@ -140,6 +186,11 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     projectCommentsEnabled:
       settings.projectCommentsEnabled ??
       DEFAULT_SITE_SETTINGS.projectCommentsEnabled,
+    commentsVisible:
+      settings.commentsVisible ?? DEFAULT_SITE_SETTINGS.commentsVisible,
+    projectCommentsVisible:
+      settings.projectCommentsVisible ??
+      DEFAULT_SITE_SETTINGS.projectCommentsVisible,
     homeHeaderColor: normalizeSectionColor(
       settings.homeHeaderColor ?? DEFAULT_SITE_SETTINGS.homeHeaderColor
     ),
@@ -147,6 +198,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
       settings.siteTitleColor,
       DEFAULT_SITE_SETTINGS.siteTitleColor
     ),
+    homeLayout: parseHomeLayout(settings.homeLayout),
     updatedAt: settings.updatedAt.toISOString(),
   };
 }
@@ -157,8 +209,11 @@ export async function upsertSiteSettings(body: {
   footerText?: string;
   commentsEnabled?: boolean;
   projectCommentsEnabled?: boolean;
+  commentsVisible?: boolean;
+  projectCommentsVisible?: boolean;
   homeHeaderColor?: string;
   siteTitleColor?: string;
+  homeLayout?: unknown;
 }): Promise<SiteSettings> {
   const validationError = validateSiteSettingsInput(body);
   if (validationError) {
@@ -170,6 +225,14 @@ export async function upsertSiteSettings(body: {
     body.siteTitleColor,
     DEFAULT_SITE_TITLE_COLOR
   );
+  const homeLayoutResult =
+    body.homeLayout !== undefined
+      ? validateHomeLayoutInput(body.homeLayout)
+      : DEFAULT_SITE_SETTINGS.homeLayout;
+  if (typeof homeLayoutResult === "string") {
+    throw new ApiError(homeLayoutResult, 400);
+  }
+  const homeLayout = serializeHomeLayout(homeLayoutResult);
 
   await prisma.siteSettings.upsert({
     where: { id: SITE_SETTINGS_ID },
@@ -181,8 +244,11 @@ export async function upsertSiteSettings(body: {
         typeof body.footerText === "string" ? body.footerText.trim() : "",
       commentsEnabled: body.commentsEnabled ?? true,
       projectCommentsEnabled: body.projectCommentsEnabled ?? true,
+      commentsVisible: body.commentsVisible ?? true,
+      projectCommentsVisible: body.projectCommentsVisible ?? true,
       homeHeaderColor,
       siteTitleColor,
+      homeLayout,
     },
     update: {
       title: body.title!.trim(),
@@ -191,8 +257,11 @@ export async function upsertSiteSettings(body: {
         typeof body.footerText === "string" ? body.footerText.trim() : "",
       commentsEnabled: body.commentsEnabled ?? true,
       projectCommentsEnabled: body.projectCommentsEnabled ?? true,
+      commentsVisible: body.commentsVisible ?? true,
+      projectCommentsVisible: body.projectCommentsVisible ?? true,
       homeHeaderColor,
       siteTitleColor,
+      homeLayout,
     },
   });
 

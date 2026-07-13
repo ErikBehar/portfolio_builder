@@ -5,13 +5,17 @@ type ProjectCommentsProps = {
   projectId: string;
   initialComments: LogComment[];
   commentsEnabled: boolean;
+  commentsVisible: boolean;
 };
 
 export function ProjectComments({
   projectId,
   initialComments,
   commentsEnabled,
+  commentsVisible,
 }: ProjectCommentsProps) {
+  if (!commentsVisible) return null;
+
   return (
     <CommentsSection
       apiBasePath={`/api/projects/${projectId}/comments`}

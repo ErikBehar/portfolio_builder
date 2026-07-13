@@ -42,8 +42,11 @@ async function seedSiteSettings() {
       footerText: DEFAULT_SITE_SETTINGS.footerText,
       commentsEnabled: DEFAULT_SITE_SETTINGS.commentsEnabled,
       projectCommentsEnabled: DEFAULT_SITE_SETTINGS.projectCommentsEnabled,
+      commentsVisible: DEFAULT_SITE_SETTINGS.commentsVisible,
+      projectCommentsVisible: DEFAULT_SITE_SETTINGS.projectCommentsVisible,
       homeHeaderColor: DEFAULT_SITE_SETTINGS.homeHeaderColor,
       siteTitleColor: DEFAULT_SITE_SETTINGS.siteTitleColor,
+      homeLayout: DEFAULT_SITE_SETTINGS.homeLayout,
     },
   });
   console.log("Seeded site settings.");
