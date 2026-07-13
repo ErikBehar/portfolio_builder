@@ -434,6 +434,8 @@ export function ProjectTimeline({
                 <RichText
                   content={hovered.project.description}
                   className="mt-2 line-clamp-2 text-xs text-muted"
+                  linkSource="rich-text"
+                  linkContextId={hovered.project.id}
                 />
               )}
 

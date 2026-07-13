@@ -4,6 +4,17 @@ export type RichTextPart =
 
 const MARKDOWN_LINK_PATTERN = /\[([^\]]+)\]\(([^)\s]+)\)/g;
 const URL_PATTERN = /(https?:\/\/[^\s<>"{}|\\^`[\]]+)/g;
+const MARKDOWN_LINK_STRIP_PATTERN = /\[([^\]]+)\]\([^)\s]+\)/g;
+
+export function plainTextFromRichText(input: string): string {
+  return input.replace(MARKDOWN_LINK_STRIP_PATTERN, "$1");
+}
+
+export function excerptRichText(input: string, maxLength = 280): string {
+  const trimmed = plainTextFromRichText(input).trim();
+  if (trimmed.length <= maxLength) return trimmed;
+  return `${trimmed.slice(0, maxLength).trim()}…`;
+}
 
 export function isAllowedRichTextHref(href: string): boolean {
   const value = href.trim();

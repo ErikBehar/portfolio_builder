@@ -2,17 +2,12 @@ import Link from "next/link";
 import { HomeSectionHeading } from "@/components/HomeSectionHeading";
 import type { LogEntryWithMedia } from "@/lib/types";
 import { formatLogDate } from "@/lib/dates";
+import { excerptRichText } from "@/lib/richText";
 
 type LogEntryPreviewProps = {
   entry: LogEntryWithMedia;
   headerColor: string;
 };
-
-function excerpt(content: string, maxLength = 280) {
-  const trimmed = content.trim();
-  if (trimmed.length <= maxLength) return trimmed;
-  return `${trimmed.slice(0, maxLength).trim()}…`;
-}
 
 export function LogEntryPreview({ entry, headerColor }: LogEntryPreviewProps) {
   const cover = entry.media[0];
@@ -65,7 +60,7 @@ export function LogEntryPreview({ entry, headerColor }: LogEntryPreviewProps) {
         )}
 
         <p className="whitespace-pre-wrap leading-relaxed text-muted">
-          {excerpt(entry.content)}
+          {excerptRichText(entry.content)}
         </p>
 
         <Link

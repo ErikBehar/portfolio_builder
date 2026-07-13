@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AdminMenu } from "@/components/AdminMenu";
 import { HeaderLinkIcon } from "@/components/HeaderLinkIcon";
+import { isTrackableExternalUrl } from "@/lib/statsTypes";
+import { trackLinkClick } from "@/lib/clientStats";
 import type { HeaderLink } from "@/lib/headerLinks";
 import type { Section } from "@/lib/sections";
 
@@ -39,6 +41,9 @@ function getBackHref(pathname: string): string | null {
       return segments.length === 2 ? "/admin" : "/admin/header-links";
     }
     if (segments[1] === "site-settings") {
+      return "/admin";
+    }
+    if (segments[1] === "stats") {
       return "/admin";
     }
     if (segments[1] === "log") {
@@ -88,6 +93,9 @@ function getCurrentLabel(pathname: string, sectionTitles: Record<string, string>
     }
     if (segments[1] === "site-settings") {
       return "Admin · Site settings";
+    }
+    if (segments[1] === "stats") {
+      return "Admin · Stats";
     }
     return `Admin · ${sectionTitles[segments[1]] ?? formatSlug(segments[1])}`;
   }
@@ -162,6 +170,16 @@ export function SiteHeader({
               target={isExternalUrl(link.url) ? "_blank" : undefined}
               rel={isExternalUrl(link.url) ? "noreferrer" : undefined}
               className="inline-flex max-w-[11rem] items-center gap-2 rounded-md border border-border px-3 py-1.5 text-sm font-medium transition-colors hover:border-accent hover:text-accent sm:max-w-none"
+              onClick={() => {
+                if (isTrackableExternalUrl(link.url)) {
+                  trackLinkClick({
+                    url: link.url,
+                    source: "header",
+                    contextId: link.id,
+                    label: link.label,
+                  });
+                }
+              }}
             >
               <HeaderLinkIcon icon={link.icon} />
               <span className="truncate">{link.label}</span>

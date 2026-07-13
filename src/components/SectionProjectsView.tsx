@@ -2,7 +2,9 @@
 
 import { useMemo } from "react";
 import { ProjectGrid } from "@/components/ProjectGrid";
+import { ProjectList } from "@/components/ProjectList";
 import { usePersistedLabelFilters } from "@/hooks/usePersistedLabelFilters";
+import { usePersistedSectionViewMode } from "@/hooks/usePersistedSectionViewMode";
 import { projectMatchesLabels } from "@/lib/labelFilter";
 import type { Section } from "@/lib/sections";
 import { SHOW_LABEL_SLUG, type ProjectLabel, type ProjectWithMedia } from "@/lib/types";
@@ -35,6 +37,9 @@ export function SectionProjectsView({
     defaultSlugs: SECTION_DEFAULT_LABELS,
     emptyMeansNone: true,
   });
+  const { mode, setMode } = usePersistedSectionViewMode(
+    `section:${section.slug}`
+  );
 
   const maxCount = Math.max(0, ...Object.values(labelCounts));
 
@@ -59,10 +64,43 @@ export function SectionProjectsView({
 
   return (
     <div className="space-y-8">
-      <section>
-        <h2 className="mb-4 text-sm font-medium uppercase tracking-[0.2em] text-muted">
-          Filter by label
-        </h2>
+      <section className="space-y-4">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <h2 className="text-sm font-medium uppercase tracking-[0.2em] text-muted">
+            Filter by label
+          </h2>
+          <div
+            className="inline-flex rounded-lg border border-border bg-surface p-1"
+            role="group"
+            aria-label="Project layout"
+          >
+            <button
+              type="button"
+              onClick={() => setMode("grid")}
+              className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
+                mode === "grid"
+                  ? "bg-accent/15 text-accent"
+                  : "text-muted hover:text-foreground"
+              }`}
+              aria-pressed={mode === "grid"}
+            >
+              Cards
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode("list")}
+              className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
+                mode === "list"
+                  ? "bg-accent/15 text-accent"
+                  : "text-muted hover:text-foreground"
+              }`}
+              aria-pressed={mode === "list"}
+            >
+              List
+            </button>
+          </div>
+        </div>
+
         <div className="flex flex-wrap gap-3">
           {allLabels.map((label) => {
             const count = labelCounts[label.slug] ?? 0;
@@ -90,7 +128,9 @@ export function SectionProjectsView({
         </div>
       </section>
 
-      {grouped ? (
+      {mode === "list" ? (
+        <ProjectList projects={filteredProjects} emptyMessage={emptyMessage} />
+      ) : grouped ? (
         <div className="space-y-10">
           {grouped.map((group) => (
             <section key={group.slug}>

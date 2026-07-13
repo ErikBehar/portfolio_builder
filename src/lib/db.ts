@@ -2,7 +2,7 @@ import "dotenv/config";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { PrismaClient } from "@/generated/prisma/client";
 
-const PRISMA_SCHEMA_VERSION = 13;
+const PRISMA_SCHEMA_VERSION = 14;
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -26,6 +26,7 @@ function isValidPrismaClient(client: PrismaClient | undefined): boolean {
       "headerLink" in client &&
       "siteSettings" in client &&
       "label" in client &&
+      "visitor" in client &&
       globalForPrisma.prismaSchemaVersion === PRISMA_SCHEMA_VERSION
   );
 }

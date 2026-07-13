@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { formatLogDate } from "@/lib/dates";
 import { getLogEntries } from "@/lib/log";
+import { excerptRichText } from "@/lib/richText";
 
 export default async function LogArchivePage() {
   const entries = await getLogEntries();
@@ -31,7 +32,7 @@ export default async function LogArchivePage() {
                 </time>
                 <h2 className="mt-1 text-xl font-semibold">{entry.title}</h2>
                 <p className="mt-2 line-clamp-2 text-sm text-muted">
-                  {entry.content.trim()}
+                  {excerptRichText(entry.content, 160)}
                 </p>
               </Link>
             </li>

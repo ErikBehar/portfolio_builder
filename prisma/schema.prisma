@@ -145,3 +145,63 @@ model ProjectComment {
 
   @@index([projectId])
 }
+
+model Visitor {
+  id          String   @id
+  firstSeenAt DateTime @default(now())
+  lastSeenAt  DateTime @updatedAt
+}
+
+model VisitorDay {
+  visitorId String
+  date      String
+
+  @@id([visitorId, date])
+  @@index([date])
+}
+
+model PageViewDaily {
+  id           String @id @default(cuid())
+  date         String
+  path         String
+  pageType     String
+  resourceSlug String?
+  sectionSlug  String?
+  views        Int    @default(0)
+  uniqueViews  Int    @default(0)
+
+  @@unique([date, path])
+  @@index([pageType, date])
+  @@index([resourceSlug, date])
+}
+
+model PageViewVisitorDay {
+  visitorId String
+  date      String
+  path      String
+
+  @@id([visitorId, date, path])
+}
+
+model ReferrerDaily {
+  date     String
+  referrer String
+  views    Int    @default(0)
+
+  @@unique([date, referrer])
+  @@index([date])
+}
+
+model LinkClick {
+  id         String   @id @default(cuid())
+  url        String
+  source     String
+  sourcePath String
+  contextId  String?
+  label      String?
+  visitorId  String?
+  createdAt  DateTime @default(now())
+
+  @@index([source, createdAt])
+  @@index([url, createdAt])
+}

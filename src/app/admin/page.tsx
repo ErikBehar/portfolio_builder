@@ -73,6 +73,16 @@ export default async function AdminHomePage() {
             Edit the site title and description used in the header and metadata.
           </p>
         </Link>
+
+        <Link
+          href="/admin/stats"
+          className="block rounded-xl border border-accent/40 bg-surface p-5 transition-colors hover:border-accent"
+        >
+          <h2 className="text-lg font-semibold">Stats</h2>
+          <p className="mt-2 text-sm text-muted">
+            View visitors, page views, referrers, and external link clicks.
+          </p>
+        </Link>
       </div>
 
       <h2 className="mb-4 text-sm font-medium uppercase tracking-[0.2em] text-muted">

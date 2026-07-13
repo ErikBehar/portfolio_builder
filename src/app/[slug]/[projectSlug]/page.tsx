@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { MediaCarousel } from "@/components/MediaCarousel";
 import { ProjectComments } from "@/components/ProjectComments";
 import { RichText } from "@/components/RichText";
+import { TrackedExternalLink } from "@/components/TrackedExternalLink";
 import { formatLogDate } from "@/lib/dates";
 import { getProjectBySlug } from "@/lib/projects";
 import { getSection } from "@/lib/sections";
@@ -51,6 +52,8 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
           content={project.description}
           fallback="Project details coming soon."
           className="mt-4 text-lg text-muted"
+          linkSource="rich-text"
+          linkContextId={project.id}
         />
 
         {project.labels.length > 0 && (
@@ -74,14 +77,17 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
             <ul className="flex flex-wrap gap-3">
               {project.links.map((link) => (
                 <li key={link.url}>
-                  <a
+                  <TrackedExternalLink
                     href={link.url}
+                    source="project-links"
+                    contextId={project.id}
+                    label={link.label}
                     target="_blank"
                     rel="noreferrer"
                     className="rounded-md border border-border px-3 py-1.5 text-sm transition-colors hover:border-accent hover:text-accent"
                   >
                     {link.label}
-                  </a>
+                  </TrackedExternalLink>
                 </li>
               ))}
             </ul>

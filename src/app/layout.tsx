@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { PageViewTracker } from "@/components/PageViewTracker";
 import { getHeaderLinks } from "@/lib/headerLinks";
 import { getSections } from "@/lib/sections";
 import { getSiteSettings } from "@/lib/siteSettings";
@@ -51,6 +52,7 @@ export default async function RootLayout({
         />
         <main className="flex-1">{children}</main>
         <SiteFooter footerText={siteSettings.footerText} />
+        <PageViewTracker />
       </body>
     </html>
   );

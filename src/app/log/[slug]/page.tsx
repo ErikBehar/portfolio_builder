@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { LogComments } from "@/components/LogComments";
 import { MediaCarousel } from "@/components/MediaCarousel";
+import { RichText } from "@/components/RichText";
 import { formatLogDate } from "@/lib/dates";
 import { getLogEntryBySlug } from "@/lib/log";
 import { getSiteSettings } from "@/lib/siteSettings";
@@ -40,9 +41,12 @@ export default async function LogEntryPage({ params }: LogEntryPageProps) {
         </div>
       )}
 
-      <div className="prose-log whitespace-pre-wrap leading-relaxed text-foreground">
-        {entry.content}
-      </div>
+      <RichText
+        content={entry.content}
+        className="prose-log text-foreground"
+        linkSource="log-content"
+        linkContextId={entry.id}
+      />
 
       <LogComments
         logEntryId={entry.id}

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { DatePicker } from "@/components/DatePicker";
+import { RichTextFieldHint } from "@/components/RichTextFieldHint";
 import { toDateInputValue, todayInputValue } from "@/lib/dates";
 import { uploadMediaFiles, type MediaDraft } from "@/lib/clientUpload";
 import { getDefaultPreviewMediaIndex } from "@/lib/media";
@@ -276,13 +277,7 @@ export function AdminProjectForm({
           className="w-full rounded-lg border border-border bg-surface px-3 py-2 font-mono text-sm"
           placeholder="Optional project description"
         />
-        <p className="text-sm text-muted">
-          Supports line breaks, URLs, and markdown-style links like{" "}
-          <code className="rounded bg-surface-elevated px-1 py-0.5 text-xs">
-            [GitHub](https://github.com/you)
-          </code>
-          .
-        </p>
+        <RichTextFieldHint />
       </label>
 
       <div className="space-y-3">
