@@ -35,25 +35,26 @@ export function AdminMenu() {
     setLoading(true);
     setError(null);
 
-    const response = await fetch("/api/admin/auth", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password }),
-    });
+    try {
+      const response = await fetch("/api/admin/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
 
-    setLoading(false);
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        setError(data?.error ?? "Invalid password");
+        setLoading(false);
+        return;
+      }
 
-    if (!response.ok) {
-      const data = await response.json();
-      setError(data.error ?? "Invalid password");
-      return;
+      // Full navigation so the new session cookie is included on the next request.
+      window.location.assign("/admin");
+    } catch {
+      setError("Could not sign in. Please try again.");
+      setLoading(false);
     }
-
-    setOpen(false);
-    setShowPassword(false);
-    setPassword("");
-    router.push("/admin");
-    router.refresh();
   }
 
   async function handleLogout() {

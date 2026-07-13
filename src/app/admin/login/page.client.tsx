@@ -1,11 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { safeAdminRedirectPath } from "@/lib/safeRedirect";
 
 export default function AdminLoginPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -18,22 +17,26 @@ export default function AdminLoginPage() {
     setLoading(true);
     setError(null);
 
-    const response = await fetch("/api/admin/auth", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password }),
-    });
+    try {
+      const response = await fetch("/api/admin/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
 
-    setLoading(false);
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        setError(data?.error ?? "Invalid password");
+        setLoading(false);
+        return;
+      }
 
-    if (!response.ok) {
-      const data = await response.json();
-      setError(data.error ?? "Invalid password");
-      return;
+      // Full navigation so the new session cookie is included on the next request.
+      window.location.assign(redirectTo);
+    } catch {
+      setError("Could not sign in. Please try again.");
+      setLoading(false);
     }
-
-    router.push(redirectTo);
-    router.refresh();
   }
 
   return (
