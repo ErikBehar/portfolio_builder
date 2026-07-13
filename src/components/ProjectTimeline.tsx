@@ -48,7 +48,8 @@ const TIMELINE_SIDE_PADDING = 48;
 const MIN_PX_PER_MONTH_FOR_MONTH_LABELS = 40;
 const ZOOM_STEP = 1.25;
 const MIN_ZOOM_MULTIPLIER = 0.25;
-const MAX_ZOOM_MULTIPLIER = 4;
+const BASE_MAX_ZOOM_MULTIPLIER = 4;
+const ABSOLUTE_MAX_ZOOM_MULTIPLIER = 32;
 
 function getLabelFontSize(count: number, maxCount: number): string {
   if (maxCount <= 0) return "0.875rem";
@@ -241,6 +242,23 @@ export function ProjectTimeline({
     return availableWidth / timelineRange.monthsSpan;
   }, [containerWidth, timelineRange]);
 
+  // Long fitted ranges need more than 4x zoom before month ticks have room for labels.
+  const maxZoomMultiplier = useMemo(() => {
+    if (!fitPxPerMonth || fitPxPerMonth <= 0) return BASE_MAX_ZOOM_MULTIPLIER;
+    const neededForMonthLabels =
+      MIN_PX_PER_MONTH_FOR_MONTH_LABELS / fitPxPerMonth;
+    return Math.min(
+      ABSOLUTE_MAX_ZOOM_MULTIPLIER,
+      Math.max(BASE_MAX_ZOOM_MULTIPLIER, neededForMonthLabels)
+    );
+  }, [fitPxPerMonth]);
+
+  useEffect(() => {
+    setZoomMultiplier((current) =>
+      Math.min(current, maxZoomMultiplier)
+    );
+  }, [maxZoomMultiplier]);
+
   const pxPerMonth =
     fitPxPerMonth !== null ? fitPxPerMonth * zoomMultiplier : null;
   const maxCount = Math.max(0, ...Object.values(labelCounts));
@@ -302,7 +320,7 @@ export function ProjectTimeline({
 
   function zoomIn() {
     setZoomMultiplier((current) =>
-      Math.min(MAX_ZOOM_MULTIPLIER, Number((current * ZOOM_STEP).toFixed(3)))
+      Math.min(maxZoomMultiplier, Number((current * ZOOM_STEP).toFixed(3)))
     );
   }
 
@@ -381,7 +399,7 @@ export function ProjectTimeline({
           <button
             type="button"
             onClick={zoomIn}
-            disabled={zoomMultiplier >= MAX_ZOOM_MULTIPLIER}
+            disabled={zoomMultiplier >= maxZoomMultiplier}
             className="rounded-md border border-border px-3 py-1.5 text-sm transition-colors hover:border-accent disabled:opacity-50"
             aria-label="Zoom in"
           >
