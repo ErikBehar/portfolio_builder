@@ -11,6 +11,13 @@ import {
 import { DEFAULT_SITE_TITLE_COLOR } from "@/lib/siteConstants";
 import { DEFAULT_SECTION_COLOR } from "@/lib/sectionConstants";
 import { normalizeSectionColor, validateSectionColor } from "@/lib/sectionValidation";
+import {
+  DEFAULT_THEME_COLORS,
+  parseThemeColors,
+  serializeThemeColors,
+  validateThemeColorsInput,
+  type ThemeColors,
+} from "@/lib/themeColors";
 
 export const SITE_SETTINGS_ID = "default";
 
@@ -25,6 +32,7 @@ export const DEFAULT_SITE_SETTINGS = {
   homeHeaderColor: DEFAULT_SECTION_COLOR,
   siteTitleColor: DEFAULT_SITE_TITLE_COLOR,
   homeLayout: DEFAULT_HOME_LAYOUT,
+  themeColors: DEFAULT_THEME_COLORS,
 };
 
 export type SiteSettings = {
@@ -39,6 +47,7 @@ export type SiteSettings = {
   homeHeaderColor: string;
   siteTitleColor: string;
   homeLayout: HomeLayout;
+  themeColors: ThemeColors;
   updatedAt: string;
 };
 
@@ -53,6 +62,7 @@ export function validateSiteSettingsInput(body: {
   homeHeaderColor?: string;
   siteTitleColor?: string;
   homeLayout?: unknown;
+  themeColors?: unknown;
 }): string | null {
   if (!body.title?.trim()) return "Site title is required";
   if (!body.description?.trim()) return "Site description is required";
@@ -95,6 +105,10 @@ export function validateSiteSettingsInput(body: {
     const layout = validateHomeLayoutInput(body.homeLayout);
     if (typeof layout === "string") return layout;
   }
+  if (body.themeColors !== undefined) {
+    const themeResult = validateThemeColorsInput(body.themeColors);
+    if (typeof themeResult === "string") return themeResult;
+  }
   return null;
 }
 
@@ -120,7 +134,8 @@ export async function ensureDefaultSiteSettings() {
       existing.projectCommentsVisible == null ||
       existing.homeHeaderColor == null ||
       existing.siteTitleColor == null ||
-      existing.homeLayout == null;
+      existing.homeLayout == null ||
+      existing.themeColors == null;
 
     if (needsBackfill) {
       await prisma.siteSettings.update({
@@ -144,6 +159,9 @@ export async function ensureDefaultSiteSettings() {
           homeLayout:
             existing.homeLayout ??
             serializeHomeLayout(DEFAULT_SITE_SETTINGS.homeLayout),
+          themeColors:
+            existing.themeColors ??
+            serializeThemeColors(DEFAULT_SITE_SETTINGS.themeColors),
         },
       });
     }
@@ -164,6 +182,7 @@ export async function ensureDefaultSiteSettings() {
       homeHeaderColor: DEFAULT_SITE_SETTINGS.homeHeaderColor,
       siteTitleColor: DEFAULT_SITE_SETTINGS.siteTitleColor,
       homeLayout: serializeHomeLayout(DEFAULT_SITE_SETTINGS.homeLayout),
+      themeColors: serializeThemeColors(DEFAULT_SITE_SETTINGS.themeColors),
     },
   });
 }
@@ -199,6 +218,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
       DEFAULT_SITE_SETTINGS.siteTitleColor
     ),
     homeLayout: parseHomeLayout(settings.homeLayout),
+    themeColors: parseThemeColors(settings.themeColors),
     updatedAt: settings.updatedAt.toISOString(),
   };
 }
@@ -214,6 +234,7 @@ export async function upsertSiteSettings(body: {
   homeHeaderColor?: string;
   siteTitleColor?: string;
   homeLayout?: unknown;
+  themeColors?: unknown;
 }): Promise<SiteSettings> {
   const validationError = validateSiteSettingsInput(body);
   if (validationError) {
@@ -233,6 +254,14 @@ export async function upsertSiteSettings(body: {
     throw new ApiError(homeLayoutResult, 400);
   }
   const homeLayout = serializeHomeLayout(homeLayoutResult);
+  const themeColorsResult =
+    body.themeColors !== undefined
+      ? validateThemeColorsInput(body.themeColors)
+      : DEFAULT_SITE_SETTINGS.themeColors;
+  if (typeof themeColorsResult === "string") {
+    throw new ApiError(themeColorsResult, 400);
+  }
+  const themeColors = serializeThemeColors(themeColorsResult);
 
   await prisma.siteSettings.upsert({
     where: { id: SITE_SETTINGS_ID },
@@ -249,6 +278,7 @@ export async function upsertSiteSettings(body: {
       homeHeaderColor,
       siteTitleColor,
       homeLayout,
+      themeColors,
     },
     update: {
       title: body.title!.trim(),
@@ -262,6 +292,7 @@ export async function upsertSiteSettings(body: {
       homeHeaderColor,
       siteTitleColor,
       homeLayout,
+      themeColors,
     },
   });
 

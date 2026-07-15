@@ -32,6 +32,7 @@ model SiteSettings {
   siteTitleColor         String   @default("#e8edf5")
   adminSessionVersion    Int      @default(1)
   homeLayout             String   @default("{\"sections\":[{\"id\":\"log\",\"visible\":true},{\"id\":\"featured\",\"visible\":true},{\"id\":\"projects\",\"visible\":true},{\"id\":\"timeline\",\"visible\":true}],\"timelineMode\":\"link\"}")
+  themeColors            String   @default("{\"background\":\"#0c0f14\",\"foreground\":\"#e8edf5\",\"surface\":\"#12161d\",\"surfaceElevated\":\"#1a1f28\",\"border\":\"#2a3140\",\"muted\":\"#8b95a8\",\"accent\":\"#5b9fd4\",\"accentForeground\":\"#0c0f14\"}")
   updatedAt              DateTime @updatedAt
 }
 

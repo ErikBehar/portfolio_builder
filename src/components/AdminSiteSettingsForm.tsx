@@ -11,6 +11,11 @@ import {
   type HomeSectionConfig,
   type TimelineDisplayMode,
 } from "@/lib/homeLayout";
+import {
+  DEFAULT_THEME_COLORS,
+  THEME_COLOR_FIELDS,
+  type ThemeColors,
+} from "@/lib/themeColors";
 import { setAdminFlash } from "@/lib/adminFlash";
 import type { SiteSettings } from "@/lib/siteSettings";
 
@@ -44,6 +49,9 @@ export function AdminSiteSettingsForm({ settings }: AdminSiteSettingsFormProps) 
   const [homeLayout, setHomeLayout] = useState<HomeLayout>(
     settings.homeLayout ?? DEFAULT_HOME_LAYOUT
   );
+  const [themeColors, setThemeColors] = useState<ThemeColors>(
+    settings.themeColors ?? DEFAULT_THEME_COLORS
+  );
   const [status, setStatus] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -58,6 +66,7 @@ export function AdminSiteSettingsForm({ settings }: AdminSiteSettingsFormProps) 
     setHomeHeaderColor(settings.homeHeaderColor ?? DEFAULT_SECTION_COLOR);
     setSiteTitleColor(settings.siteTitleColor ?? DEFAULT_SITE_TITLE_COLOR);
     setHomeLayout(settings.homeLayout ?? DEFAULT_HOME_LAYOUT);
+    setThemeColors(settings.themeColors ?? DEFAULT_THEME_COLORS);
   }, [settings]);
 
   function moveSection(index: number, direction: -1 | 1) {
@@ -107,6 +116,7 @@ export function AdminSiteSettingsForm({ settings }: AdminSiteSettingsFormProps) 
         homeHeaderColor,
         siteTitleColor,
         homeLayout,
+        themeColors,
       }),
     });
 
@@ -128,9 +138,14 @@ export function AdminSiteSettingsForm({ settings }: AdminSiteSettingsFormProps) 
     setHomeHeaderColor(data.homeHeaderColor ?? DEFAULT_SECTION_COLOR);
     setSiteTitleColor(data.siteTitleColor ?? DEFAULT_SITE_TITLE_COLOR);
     setHomeLayout(data.homeLayout ?? DEFAULT_HOME_LAYOUT);
+    setThemeColors(data.themeColors ?? DEFAULT_THEME_COLORS);
     setStatus("Saved.");
     setAdminFlash("Site settings saved.");
     router.refresh();
+  }
+
+  function updateThemeColor(key: keyof ThemeColors, value: string) {
+    setThemeColors((current) => ({ ...current, [key]: value }));
   }
 
   return (
@@ -221,6 +236,46 @@ export function AdminSiteSettingsForm({ settings }: AdminSiteSettingsFormProps) 
           Featured projects, and Sections.
         </p>
       </label>
+
+      <fieldset className="space-y-4 rounded-xl border border-border bg-surface p-4">
+        <legend className="px-1 text-sm font-medium">Site theme colors</legend>
+        <p className="text-sm text-muted">
+          Global colors used across every page — backgrounds, text, borders, and
+          accent highlights.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {THEME_COLOR_FIELDS.map((field) => (
+            <label key={field.key} className="block space-y-2">
+              <span className="text-sm font-medium">{field.label}</span>
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  value={themeColors[field.key]}
+                  onChange={(event) =>
+                    updateThemeColor(field.key, event.target.value)
+                  }
+                  className="h-10 w-14 cursor-pointer rounded-lg border border-border bg-surface"
+                />
+                <input
+                  value={themeColors[field.key]}
+                  onChange={(event) =>
+                    updateThemeColor(field.key, event.target.value)
+                  }
+                  className="w-full rounded-lg border border-border bg-surface px-3 py-2 font-mono text-sm"
+                />
+              </div>
+              <p className="text-sm text-muted">{field.description}</p>
+            </label>
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={() => setThemeColors(DEFAULT_THEME_COLORS)}
+          className="rounded-lg border border-border px-3 py-2 text-sm transition-colors hover:border-accent hover:text-accent"
+        >
+          Reset theme to defaults
+        </button>
+      </fieldset>
 
       <fieldset className="space-y-3 rounded-xl border border-border bg-surface p-4">
         <legend className="px-1 text-sm font-medium">Homepage sections</legend>

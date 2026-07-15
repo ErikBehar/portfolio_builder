@@ -1,5 +1,6 @@
 "use client";
 
+import { richTextLinkClassName } from "@/lib/linkStyles";
 import type { LinkSource } from "@/lib/statsTypes";
 import { isTrackableExternalUrl } from "@/lib/statsTypes";
 import { trackLinkClick } from "@/lib/clientStats";
@@ -11,8 +12,7 @@ type RichTextLinkProps = {
   linkContextId?: string | null;
 };
 
-const linkClassName =
-  "text-accent underline decoration-accent/50 underline-offset-2 transition-colors hover:text-foreground hover:decoration-accent";
+const linkClassName = richTextLinkClassName;
 
 export function RichTextLink({
   href,

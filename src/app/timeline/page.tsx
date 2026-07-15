@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { inlineLinkClassName } from "@/lib/linkStyles";
 import { Suspense } from "react";
 import { ProjectTimeline } from "@/components/ProjectTimeline";
 import { getTimelinePageData } from "@/lib/timelineData";
@@ -33,7 +34,7 @@ export default async function TimelinePage() {
       </Suspense>
 
       <p className="mt-10 text-sm text-muted">
-        <Link href="/" className="text-accent hover:underline">
+        <Link href="/" className={inlineLinkClassName}>
           ← Back to home
         </Link>
       </p>

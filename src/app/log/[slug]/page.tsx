@@ -6,6 +6,7 @@ import { RichText } from "@/components/RichText";
 import { formatLogDate } from "@/lib/dates";
 import { getLogEntryBySlug } from "@/lib/log";
 import { getSiteSettings } from "@/lib/siteSettings";
+import { inlineLinkClassName } from "@/lib/linkStyles";
 
 type LogEntryPageProps = {
   params: Promise<{ slug: string }>;
@@ -56,7 +57,7 @@ export default async function LogEntryPage({ params }: LogEntryPageProps) {
       />
 
       <p className="mt-10 text-sm text-muted">
-        <Link href="/log/archive" className="text-accent underline-offset-4 hover:underline">
+        <Link href="/log/archive" className={inlineLinkClassName}>
           ← All log entries
         </Link>
       </p>

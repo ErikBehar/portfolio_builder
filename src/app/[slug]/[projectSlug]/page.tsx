@@ -8,6 +8,7 @@ import { formatLogDate } from "@/lib/dates";
 import { getProjectBySlug } from "@/lib/projects";
 import { getSection } from "@/lib/sections";
 import { getSiteSettings } from "@/lib/siteSettings";
+import { inlineLinkClassName } from "@/lib/linkStyles";
 
 export const dynamic = "force-dynamic";
 
@@ -105,7 +106,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
       />
 
       <p className="mt-10 text-sm text-muted">
-        <Link href={`/${section.slug}`} className="text-accent hover:underline">
+        <Link href={`/${section.slug}`} className={inlineLinkClassName}>
           ← Back to {section.title}
         </Link>
       </p>

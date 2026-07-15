@@ -1,3 +1,4 @@
+import { staticLinkClassName } from "@/lib/linkStyles";
 import { parseRichText } from "@/lib/richText";
 import { RichTextLink } from "@/components/RichTextLink";
 import type { LinkSource } from "@/lib/statsTypes";
@@ -39,7 +40,7 @@ export function RichText({
 
         if (!interactive) {
           return (
-            <span key={index} className="text-accent">
+            <span key={index} className={staticLinkClassName}>
               {part.label}
             </span>
           );

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { HomeSectionHeading } from "@/components/HomeSectionHeading";
+import { inlineLinkClassName } from "@/lib/linkStyles";
 import type { LogEntryWithMedia } from "@/lib/types";
 import { formatLogDate } from "@/lib/dates";
 import { excerptRichText } from "@/lib/richText";
@@ -33,7 +34,7 @@ export function LogEntryPreview({ entry, headerColor }: LogEntryPreviewProps) {
           </div>
           <Link
             href="/log/archive"
-            className="text-sm text-accent underline-offset-4 hover:underline"
+            className={inlineLinkClassName}
           >
             See all entries →
           </Link>
@@ -65,7 +66,7 @@ export function LogEntryPreview({ entry, headerColor }: LogEntryPreviewProps) {
 
         <Link
           href={`/log/${entry.slug}`}
-          className="mt-4 inline-block text-sm text-accent underline-offset-4 hover:underline"
+          className={inlineLinkClassName}
         >
           Read full entry
         </Link>

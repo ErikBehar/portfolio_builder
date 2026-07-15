@@ -10,6 +10,7 @@ import { getFeaturedProjects } from "@/lib/projects";
 import { getSections } from "@/lib/sections";
 import { DEFAULT_SECTION_COLOR } from "@/lib/sectionConstants";
 import { getSiteSettings } from "@/lib/siteSettings";
+import { inlineLinkClassName } from "@/lib/linkStyles";
 import { getTimelinePageData } from "@/lib/timelineData";
 import type { HomeSectionId } from "@/lib/homeLayout";
 
@@ -109,7 +110,7 @@ export default async function HomePage() {
                 />
               </Suspense>
               <p className="mt-6 text-sm text-muted">
-                <Link href="/timeline" className="text-accent hover:underline">
+                <Link href="/timeline" className={inlineLinkClassName}>
                   Open full timeline page →
                 </Link>
               </p>

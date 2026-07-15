@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { inlineLinkClassName } from "@/lib/linkStyles";
 import { formatLogDate } from "@/lib/dates";
 import { getLogEntries } from "@/lib/log";
 import { excerptRichText } from "@/lib/richText";
@@ -41,7 +42,7 @@ export default async function LogArchivePage() {
       )}
 
       <p className="mt-10 text-sm text-muted">
-        <Link href="/" className="text-accent underline-offset-4 hover:underline">
+        <Link href="/" className={inlineLinkClassName}>
           ← Back to home
         </Link>
       </p>

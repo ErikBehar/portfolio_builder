@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { CategoryGroupHeader } from "@/components/CategoryGroupHeader";
 import { ProjectGrid } from "@/components/ProjectGrid";
 import { ProjectList } from "@/components/ProjectList";
 import { usePersistedLabelFilters } from "@/hooks/usePersistedLabelFilters";
@@ -130,10 +131,13 @@ export function SectionProjectsView({
 
       {mode === "list" ? (
         grouped ? (
-          <div className="space-y-10">
+          <div className="space-y-14">
             {grouped.map((group) => (
               <section key={group.slug}>
-                <h2 className="mb-4 text-xl font-semibold">{group.title}</h2>
+                <CategoryGroupHeader
+                  title={group.title}
+                  accentColor={section.color}
+                />
                 <ProjectList
                   projects={group.projects}
                   showCategory={false}
@@ -150,10 +154,13 @@ export function SectionProjectsView({
           <ProjectList projects={filteredProjects} emptyMessage={emptyMessage} />
         )
       ) : grouped ? (
-        <div className="space-y-10">
+        <div className="space-y-14">
           {grouped.map((group) => (
             <section key={group.slug}>
-              <h2 className="mb-4 text-xl font-semibold">{group.title}</h2>
+              <CategoryGroupHeader
+                title={group.title}
+                accentColor={section.color}
+              />
               <ProjectGrid
                 projects={group.projects}
                 emptyMessage={

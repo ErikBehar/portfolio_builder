@@ -6,6 +6,7 @@ import { PageViewTracker } from "@/components/PageViewTracker";
 import { getHeaderLinks } from "@/lib/headerLinks";
 import { getSections } from "@/lib/sections";
 import { getSiteSettings } from "@/lib/siteSettings";
+import { themeColorsToCssVars } from "@/lib/themeColors";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -42,6 +43,7 @@ export default async function RootLayout({
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      style={themeColorsToCssVars(siteSettings.themeColors)}
     >
       <body className="flex min-h-full flex-col bg-background text-foreground">
         <SiteHeader
