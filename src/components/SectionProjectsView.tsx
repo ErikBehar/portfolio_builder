@@ -129,7 +129,26 @@ export function SectionProjectsView({
       </section>
 
       {mode === "list" ? (
-        <ProjectList projects={filteredProjects} emptyMessage={emptyMessage} />
+        grouped ? (
+          <div className="space-y-10">
+            {grouped.map((group) => (
+              <section key={group.slug}>
+                <h2 className="mb-4 text-xl font-semibold">{group.title}</h2>
+                <ProjectList
+                  projects={group.projects}
+                  showCategory={false}
+                  emptyMessage={
+                    filteredProjects.length === 0
+                      ? emptyMessage
+                      : `No projects in ${group.title}.`
+                  }
+                />
+              </section>
+            ))}
+          </div>
+        ) : (
+          <ProjectList projects={filteredProjects} emptyMessage={emptyMessage} />
+        )
       ) : grouped ? (
         <div className="space-y-10">
           {grouped.map((group) => (

@@ -6,11 +6,13 @@ import { RichText } from "@/components/RichText";
 type ProjectListProps = {
   projects: ProjectWithMedia[];
   emptyMessage?: string;
+  showCategory?: boolean;
 };
 
 export function ProjectList({
   projects,
   emptyMessage = "No projects in this section yet. Add some from the admin page.",
+  showCategory = true,
 }: ProjectListProps) {
   if (projects.length === 0) {
     return (
@@ -38,7 +40,7 @@ export function ProjectList({
                 <h3 className="truncate text-base font-semibold text-foreground group-hover:text-accent">
                   {project.title}
                 </h3>
-                {project.category && (
+                {showCategory && project.category && (
                   <span className="text-xs uppercase tracking-wider text-accent">
                     {project.category.replace(/-/g, " ")}
                   </span>
