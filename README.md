@@ -2,6 +2,8 @@
 
 A configurable portfolio site with section-based project navigation, a project timeline, featured carousel, blog-style log entries, visitor comments, and a password-protected admin area for managing all content.
 
+**Live example:** [Erik Behar's Portfolio](https://eb-portfolio.up.railway.app/) — built and deployed with this project on [Railway](https://railway.app/).
+
 ## Features
 
 ### Public site
