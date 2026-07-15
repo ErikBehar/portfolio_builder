@@ -1,5 +1,11 @@
 import { prisma } from "@/lib/db";
 import { ApiError } from "@/lib/apiErrors";
+import {
+  deleteSectionLabel,
+  ensureSectionLabelsBackfilled,
+  syncSectionLabelForSection,
+  updateSectionLabelMetadata,
+} from "@/lib/sectionLabels";
 import { DEFAULT_SECTION_COLOR } from "@/lib/sectionConstants";
 import {
   buildSectionSlug,
@@ -57,6 +63,8 @@ function toSection(record: SectionRecord): Section {
 }
 
 export async function getSections(): Promise<Section[]> {
+  await ensureSectionLabelsBackfilled();
+
   const sections = await prisma.portfolioSection.findMany({
     orderBy: [{ sortOrder: "asc" }, { title: "asc" }],
   });
@@ -133,6 +141,7 @@ export async function createSection(body: SectionInput) {
   }
 
   const section = await prisma.portfolioSection.create({ data: input });
+  await syncSectionLabelForSection(section.slug, section.title);
   return toSection(section);
 }
 
@@ -163,6 +172,8 @@ export async function updateSection(id: string, body: SectionInput) {
     });
   }
 
+  await updateSectionLabelMetadata(existing.slug, input.slug, input.title);
+
   return toSection(section);
 }
 
@@ -184,4 +195,5 @@ export async function deleteSection(id: string) {
   }
 
   await prisma.portfolioSection.delete({ where: { id } });
+  await deleteSectionLabel(section.slug);
 }

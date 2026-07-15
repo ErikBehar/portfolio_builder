@@ -7,9 +7,13 @@ import type { ProjectLabel } from "@/lib/types";
 
 type AdminLabelFormProps = {
   label?: ProjectLabel;
+  managedBySection?: boolean;
 };
 
-export function AdminLabelForm({ label }: AdminLabelFormProps) {
+export function AdminLabelForm({
+  label,
+  managedBySection = false,
+}: AdminLabelFormProps) {
   const router = useRouter();
   const [name, setName] = useState(label?.name ?? "");
   const [slug, setSlug] = useState(label?.slug ?? "");
@@ -65,7 +69,8 @@ export function AdminLabelForm({ label }: AdminLabelFormProps) {
           required
           value={name}
           onChange={(event) => setName(event.target.value)}
-          className="w-full rounded-lg border border-border bg-surface px-3 py-2"
+          disabled={managedBySection}
+          className="w-full rounded-lg border border-border bg-surface px-3 py-2 disabled:opacity-70"
           placeholder="Professional"
         />
       </label>
@@ -75,10 +80,16 @@ export function AdminLabelForm({ label }: AdminLabelFormProps) {
         <input
           value={slug}
           onChange={(event) => setSlug(event.target.value)}
-          disabled={label?.slug === "show"}
+          disabled={label?.slug === "show" || managedBySection}
           className="w-full rounded-lg border border-border bg-surface px-3 py-2 disabled:opacity-70"
           placeholder="professional"
         />
+        {managedBySection && (
+          <p className="text-sm text-muted">
+            This label is managed by its portfolio section. Edit the section title
+            to rename it, or delete the section to remove it.
+          </p>
+        )}
       </label>
 
       {status && <p className="text-sm text-muted">{status}</p>}
@@ -86,12 +97,12 @@ export function AdminLabelForm({ label }: AdminLabelFormProps) {
       <div className="flex flex-wrap gap-3">
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isSubmitting || managedBySection}
           className="rounded-lg bg-accent px-5 py-2.5 text-sm font-medium text-accent-foreground disabled:opacity-60"
         >
           {label ? "Update label" : "Create label"}
         </button>
-        {label && label.slug !== "show" && (
+        {label && label.slug !== "show" && !managedBySection && (
           <button
             type="button"
             onClick={handleDelete}

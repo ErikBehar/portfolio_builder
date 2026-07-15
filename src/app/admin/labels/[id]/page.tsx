@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { AdminLabelForm } from "@/components/AdminLabelForm";
 import { getLabelById } from "@/lib/labels";
+import { isSectionLabelSlug } from "@/lib/sectionLabels";
 
 type EditLabelPageProps = {
   params: Promise<{ id: string }>;
@@ -23,7 +24,10 @@ export default async function EditLabelPage({ params }: EditLabelPageProps) {
         <h1 className="text-3xl font-semibold tracking-tight">Edit label</h1>
       </header>
 
-      <AdminLabelForm label={label} />
+      <AdminLabelForm
+        label={label}
+        managedBySection={await isSectionLabelSlug(label.slug)}
+      />
     </div>
   );
 }

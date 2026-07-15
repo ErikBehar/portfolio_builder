@@ -40,7 +40,12 @@ export function AdminProjectForm({
     if (project) {
       return project.labels.map((label) => label.id);
     }
-    return showLabel ? [showLabel.id] : [];
+    const ids = showLabel ? [showLabel.id] : [];
+    const sectionLabel = allLabels.find((label) => label.slug === section.slug);
+    if (sectionLabel && !ids.includes(sectionLabel.id)) {
+      ids.push(sectionLabel.id);
+    }
+    return ids;
   });
   const [availableLabels, setAvailableLabels] = useState<ProjectLabel[]>(allLabels);
   const [newLabelName, setNewLabelName] = useState("");
@@ -63,6 +68,9 @@ export function AdminProjectForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   function toggleLabel(labelId: string) {
+    const sectionLabel = availableLabels.find((label) => label.slug === section.slug);
+    if (sectionLabel?.id === labelId) return;
+
     setSelectedLabelIds((current) =>
       current.includes(labelId)
         ? current.filter((id) => id !== labelId)
@@ -287,28 +295,38 @@ export function AdminProjectForm({
       <div className="space-y-3">
         <h3 className="text-sm font-medium">Labels</h3>
         <p className="text-sm text-muted">
-          New projects include Show by default. Remove it to hide a project from the
-          default section view. Add Featured to include a project in the home page
-          carousel.
+          New projects include Show by default. The {section.title} section label is
+          assigned automatically and cannot be removed. Add Featured to include a
+          project in the home page carousel.
         </p>
 
         {availableLabels.length > 0 ? (
           <div className="flex flex-wrap gap-2">
             {availableLabels.map((label) => {
               const selected = selectedLabelIds.includes(label.id);
+              const isSectionLabel = label.slug === section.slug;
 
               return (
                 <button
                   key={label.id}
                   type="button"
                   onClick={() => toggleLabel(label.id)}
+                  disabled={isSectionLabel}
+                  title={
+                    isSectionLabel
+                      ? "Section labels are assigned automatically"
+                      : undefined
+                  }
                   className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${
-                    selected
-                      ? "border-accent bg-accent/15 text-accent"
-                      : "border-border bg-surface text-muted hover:border-accent/60 hover:text-foreground"
+                    isSectionLabel
+                      ? "cursor-default border-accent/40 bg-accent/10 text-accent opacity-90"
+                      : selected
+                        ? "border-accent bg-accent/15 text-accent"
+                        : "border-border bg-surface text-muted hover:border-accent/60 hover:text-foreground"
                   }`}
                 >
                   {label.name}
+                  {isSectionLabel ? " (section)" : ""}
                 </button>
               );
             })}

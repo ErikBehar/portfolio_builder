@@ -3,6 +3,10 @@ import { ApiError } from "@/lib/apiErrors";
 import { slugify, validateSlug } from "@/lib/slug";
 import { FEATURED_LABEL_SLUG, SHOW_LABEL_SLUG } from "@/lib/types";
 import type { ProjectLabel } from "@/lib/types";
+import {
+  ensureSectionLabelsBackfilled,
+  isSectionLabelSlug,
+} from "@/lib/sectionLabels";
 
 type LabelRecord = {
   id: string;
@@ -23,6 +27,7 @@ function toLabel(record: LabelRecord): ProjectLabel & { createdAt: string } {
 
 export async function getLabels() {
   await ensureSystemLabels();
+  await ensureSectionLabelsBackfilled();
 
   const labels = await prisma.label.findMany({
     orderBy: [{ name: "asc" }],
@@ -89,6 +94,13 @@ export async function createLabel(body: { name?: string; slug?: string }) {
     throw new ApiError("A label with this slug already exists", 409);
   }
 
+  if (await isSectionLabelSlug(slug)) {
+    throw new ApiError(
+      "This slug is reserved for a section label. Edit the section instead.",
+      409
+    );
+  }
+
   const label = await prisma.label.create({
     data: {
       name: body.name.trim(),
@@ -106,6 +118,13 @@ export async function updateLabel(
   const existing = await prisma.label.findUnique({ where: { id } });
   if (!existing) {
     throw new ApiError("Label not found", 404);
+  }
+
+  if (await isSectionLabelSlug(existing.slug)) {
+    throw new ApiError(
+      "Section labels are managed automatically. Edit the section title instead.",
+      400
+    );
   }
 
   if (!body.name?.trim()) {
@@ -144,6 +163,13 @@ export async function deleteLabel(id: string) {
 
   if (label.slug === SHOW_LABEL_SLUG) {
     throw new ApiError("The default show label cannot be deleted", 400);
+  }
+
+  if (await isSectionLabelSlug(label.slug)) {
+    throw new ApiError(
+      "Section labels are managed automatically. Delete the section instead.",
+      400
+    );
   }
 
   await prisma.label.delete({ where: { id } });

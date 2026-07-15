@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { getLabels } from "@/lib/labels";
+import { getSections } from "@/lib/sections";
 
 export default async function AdminLabelsPage() {
-  const labels = await getLabels();
+  const [labels, sections] = await Promise.all([getLabels(), getSections()]);
+  const sectionSlugs = new Set(sections.map((section) => section.slug));
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-12">
@@ -37,16 +39,27 @@ export default async function AdminLabelsPage() {
               className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-border bg-surface px-5 py-4"
             >
               <div>
-                <h2 className="font-medium">{label.name}</h2>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="font-medium">{label.name}</h2>
+                  {sectionSlugs.has(label.slug) && (
+                    <span className="rounded-full border border-accent/40 bg-accent/10 px-2 py-0.5 text-xs text-accent">
+                      Section
+                    </span>
+                  )}
+                </div>
                 <p className="text-sm text-muted">/{label.slug}</p>
               </div>
 
-              <Link
-                href={`/admin/labels/${label.id}`}
-                className="text-sm text-accent hover:underline"
-              >
-                Edit
-              </Link>
+              {sectionSlugs.has(label.slug) ? (
+                <span className="text-sm text-muted">Managed by section</span>
+              ) : (
+                <Link
+                  href={`/admin/labels/${label.id}`}
+                  className="text-sm text-accent hover:underline"
+                >
+                  Edit
+                </Link>
+              )}
             </div>
           ))}
         </div>

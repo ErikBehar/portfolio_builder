@@ -52,6 +52,62 @@ async function seedSiteSettings() {
   console.log("Seeded site settings.");
 }
 
+async function seedSectionLabels() {
+  const sections = await prisma.portfolioSection.findMany({
+    select: { slug: true, title: true },
+  });
+
+  for (const section of sections) {
+    const existing = await prisma.label.findUnique({
+      where: { slug: section.slug },
+    });
+
+    const label =
+      existing ??
+      (await prisma.label.create({
+        data: { name: section.title, slug: section.slug },
+      }));
+
+    if (existing && existing.name !== section.title) {
+      await prisma.label.update({
+        where: { id: existing.id },
+        data: { name: section.title },
+      });
+    }
+
+    const projects = await prisma.project.findMany({
+      where: { section: section.slug },
+      select: { id: true },
+    });
+
+    if (projects.length === 0) continue;
+
+    const assigned = await prisma.projectLabel.findMany({
+      where: {
+        labelId: label.id,
+        projectId: { in: projects.map((project) => project.id) },
+      },
+      select: { projectId: true },
+    });
+
+    const assignedIds = new Set(assigned.map((entry) => entry.projectId));
+    const missing = projects.filter((project) => !assignedIds.has(project.id));
+
+    if (missing.length > 0) {
+      await prisma.projectLabel.createMany({
+        data: missing.map((project) => ({
+          projectId: project.id,
+          labelId: label.id,
+        })),
+      });
+    }
+  }
+
+  if (sections.length > 0) {
+    console.log(`Synced section labels for ${sections.length} section(s).`);
+  }
+}
+
 async function main() {
   const count = await prisma.portfolioSection.count();
 
@@ -75,6 +131,7 @@ async function main() {
 
   await seedHeaderLinks();
   await seedSiteSettings();
+  await seedSectionLabels();
 }
 
 main()

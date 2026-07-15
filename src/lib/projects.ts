@@ -3,6 +3,7 @@ import { ApiError } from "@/lib/apiErrors";
 import { prisma } from "@/lib/db";
 import { parseLinks, sanitizeProjectLinks } from "@/lib/links";
 import { ensureFeaturedLabel, ensureShowLabel, ensureSystemLabels } from "@/lib/labels";
+import { resolveLabelIdsWithSectionLabel } from "@/lib/sectionLabels";
 import {
   buildMediaCreateInput,
   replaceProjectMedia,
@@ -285,7 +286,14 @@ async function saveProjectRecord(
           include: projectInclude,
         });
 
-  await syncProjectLabels(project.id, body.labelIds);
+  await syncProjectLabels(
+    project.id,
+    await resolveLabelIdsWithSectionLabel(
+      body.labelIds,
+      section.slug,
+      section.title
+    )
+  );
 
   const withLabels = await prisma.project.findUnique({
     where: { id: savedProject.id },
