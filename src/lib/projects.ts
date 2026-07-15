@@ -1,7 +1,7 @@
 import { parseDateInput } from "@/lib/dates";
 import { ApiError } from "@/lib/apiErrors";
 import { prisma } from "@/lib/db";
-import { parseLinks } from "@/lib/links";
+import { parseLinks, sanitizeProjectLinks } from "@/lib/links";
 import { ensureFeaturedLabel, ensureShowLabel, ensureSystemLabels } from "@/lib/labels";
 import {
   buildMediaCreateInput,
@@ -253,7 +253,7 @@ async function saveProjectRecord(
     description: body.description ?? null,
     section: section.slug,
     category: body.category ?? null,
-    links: JSON.stringify(body.links ?? []),
+    links: JSON.stringify(sanitizeProjectLinks(body.links)),
     createdAt: body.createdAt ? parseDateInput(body.createdAt) : undefined,
     media: {
       create: buildMediaCreateInput(body.media ?? []),

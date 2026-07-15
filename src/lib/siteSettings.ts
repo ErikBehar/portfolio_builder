@@ -33,6 +33,7 @@ export const DEFAULT_SITE_SETTINGS = {
   siteTitleColor: DEFAULT_SITE_TITLE_COLOR,
   homeLayout: DEFAULT_HOME_LAYOUT,
   themeColors: DEFAULT_THEME_COLORS,
+  linkPulsingEnabled: true,
 };
 
 export type SiteSettings = {
@@ -48,6 +49,7 @@ export type SiteSettings = {
   siteTitleColor: string;
   homeLayout: HomeLayout;
   themeColors: ThemeColors;
+  linkPulsingEnabled: boolean;
   updatedAt: string;
 };
 
@@ -63,6 +65,7 @@ export function validateSiteSettingsInput(body: {
   siteTitleColor?: string;
   homeLayout?: unknown;
   themeColors?: unknown;
+  linkPulsingEnabled?: boolean;
 }): string | null {
   if (!body.title?.trim()) return "Site title is required";
   if (!body.description?.trim()) return "Site description is required";
@@ -109,6 +112,12 @@ export function validateSiteSettingsInput(body: {
     const themeResult = validateThemeColorsInput(body.themeColors);
     if (typeof themeResult === "string") return themeResult;
   }
+  if (
+    body.linkPulsingEnabled !== undefined &&
+    typeof body.linkPulsingEnabled !== "boolean"
+  ) {
+    return "Link pulsing enabled must be true or false";
+  }
   return null;
 }
 
@@ -135,7 +144,8 @@ export async function ensureDefaultSiteSettings() {
       existing.homeHeaderColor == null ||
       existing.siteTitleColor == null ||
       existing.homeLayout == null ||
-      existing.themeColors == null;
+      existing.themeColors == null ||
+      existing.linkPulsingEnabled == null;
 
     if (needsBackfill) {
       await prisma.siteSettings.update({
@@ -162,6 +172,9 @@ export async function ensureDefaultSiteSettings() {
           themeColors:
             existing.themeColors ??
             serializeThemeColors(DEFAULT_SITE_SETTINGS.themeColors),
+          linkPulsingEnabled:
+            existing.linkPulsingEnabled ??
+            DEFAULT_SITE_SETTINGS.linkPulsingEnabled,
         },
       });
     }
@@ -183,6 +196,7 @@ export async function ensureDefaultSiteSettings() {
       siteTitleColor: DEFAULT_SITE_SETTINGS.siteTitleColor,
       homeLayout: serializeHomeLayout(DEFAULT_SITE_SETTINGS.homeLayout),
       themeColors: serializeThemeColors(DEFAULT_SITE_SETTINGS.themeColors),
+      linkPulsingEnabled: DEFAULT_SITE_SETTINGS.linkPulsingEnabled,
     },
   });
 }
@@ -219,6 +233,8 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     ),
     homeLayout: parseHomeLayout(settings.homeLayout),
     themeColors: parseThemeColors(settings.themeColors),
+    linkPulsingEnabled:
+      settings.linkPulsingEnabled ?? DEFAULT_SITE_SETTINGS.linkPulsingEnabled,
     updatedAt: settings.updatedAt.toISOString(),
   };
 }
@@ -235,6 +251,7 @@ export async function upsertSiteSettings(body: {
   siteTitleColor?: string;
   homeLayout?: unknown;
   themeColors?: unknown;
+  linkPulsingEnabled?: boolean;
 }): Promise<SiteSettings> {
   const validationError = validateSiteSettingsInput(body);
   if (validationError) {
@@ -279,6 +296,7 @@ export async function upsertSiteSettings(body: {
       siteTitleColor,
       homeLayout,
       themeColors,
+      linkPulsingEnabled: body.linkPulsingEnabled ?? true,
     },
     update: {
       title: body.title!.trim(),
@@ -293,6 +311,7 @@ export async function upsertSiteSettings(body: {
       siteTitleColor,
       homeLayout,
       themeColors,
+      linkPulsingEnabled: body.linkPulsingEnabled ?? true,
     },
   });
 

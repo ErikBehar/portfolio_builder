@@ -8,7 +8,8 @@ import { formatLogDate } from "@/lib/dates";
 import { getProjectBySlug } from "@/lib/projects";
 import { getSection } from "@/lib/sections";
 import { getSiteSettings } from "@/lib/siteSettings";
-import { inlineLinkClassName, projectLinkButtonClassName } from "@/lib/linkStyles";
+import { inlineLinkClassName, getProjectLinkButtonClassName } from "@/lib/linkStyles";
+import { isProjectLinkPulsing } from "@/lib/links";
 
 export const dynamic = "force-dynamic";
 
@@ -85,7 +86,12 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                     label={link.label}
                     target="_blank"
                     rel="noreferrer"
-                    className={projectLinkButtonClassName}
+                    className={getProjectLinkButtonClassName(
+                      isProjectLinkPulsing(
+                        link,
+                        siteSettings.linkPulsingEnabled
+                      )
+                    )}
                   >
                     {link.label}
                   </TrackedExternalLink>

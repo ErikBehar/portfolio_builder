@@ -139,7 +139,11 @@ export function AdminProjectForm({
     }
   }
 
-  function updateLink(index: number, field: keyof ProjectLink, value: string) {
+  function updateLink(
+    index: number,
+    field: keyof ProjectLink,
+    value: string | boolean
+  ) {
     setLinks((current) =>
       current.map((link, linkIndex) =>
         linkIndex === index ? { ...link, [field]: value } : link
@@ -342,7 +346,12 @@ export function AdminProjectForm({
           <h3 className="text-sm font-medium">Links</h3>
           <button
             type="button"
-            onClick={() => setLinks((current) => [...current, { label: "", url: "" }])}
+            onClick={() =>
+              setLinks((current) => [
+                ...current,
+                { label: "", url: "", pulse: true },
+              ])
+            }
             className="text-sm text-accent"
           >
             + Add link
@@ -355,33 +364,49 @@ export function AdminProjectForm({
           links.map((link, index) => (
             <div
               key={index}
-              className="grid gap-3 rounded-xl border border-border bg-surface p-4 sm:grid-cols-[1fr_1fr_auto]"
+              className="space-y-3 rounded-xl border border-border bg-surface p-4"
             >
-              <label className="space-y-1">
-                <span className="text-xs text-muted">Label</span>
+              <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
+                <label className="space-y-1">
+                  <span className="text-xs text-muted">Label</span>
+                  <input
+                    value={link.label}
+                    onChange={(event) =>
+                      updateLink(index, "label", event.target.value)
+                    }
+                    className="w-full rounded-lg border border-border bg-background px-3 py-2"
+                    placeholder="GitHub"
+                  />
+                </label>
+                <label className="space-y-1">
+                  <span className="text-xs text-muted">URL</span>
+                  <input
+                    value={link.url}
+                    onChange={(event) =>
+                      updateLink(index, "url", event.target.value)
+                    }
+                    className="w-full rounded-lg border border-border bg-background px-3 py-2"
+                    placeholder="https://"
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={() => removeLink(index)}
+                  className="self-end text-sm text-red-400 sm:self-center"
+                >
+                  Remove
+                </button>
+              </div>
+              <label className="flex items-center gap-2 text-sm">
                 <input
-                  value={link.label}
-                  onChange={(event) => updateLink(index, "label", event.target.value)}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2"
-                  placeholder="GitHub"
+                  type="checkbox"
+                  checked={link.pulse !== false}
+                  onChange={(event) =>
+                    updateLink(index, "pulse", event.target.checked)
+                  }
                 />
+                Pulsing border animation
               </label>
-              <label className="space-y-1">
-                <span className="text-xs text-muted">URL</span>
-                <input
-                  value={link.url}
-                  onChange={(event) => updateLink(index, "url", event.target.value)}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2"
-                  placeholder="https://"
-                />
-              </label>
-              <button
-                type="button"
-                onClick={() => removeLink(index)}
-                className="self-end text-sm text-red-400 sm:self-center"
-              >
-                Remove
-              </button>
             </div>
           ))
         )}

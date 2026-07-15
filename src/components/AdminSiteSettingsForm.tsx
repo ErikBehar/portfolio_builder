@@ -52,6 +52,9 @@ export function AdminSiteSettingsForm({ settings }: AdminSiteSettingsFormProps) 
   const [themeColors, setThemeColors] = useState<ThemeColors>(
     settings.themeColors ?? DEFAULT_THEME_COLORS
   );
+  const [linkPulsingEnabled, setLinkPulsingEnabled] = useState(
+    settings.linkPulsingEnabled ?? true
+  );
   const [status, setStatus] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -67,6 +70,7 @@ export function AdminSiteSettingsForm({ settings }: AdminSiteSettingsFormProps) 
     setSiteTitleColor(settings.siteTitleColor ?? DEFAULT_SITE_TITLE_COLOR);
     setHomeLayout(settings.homeLayout ?? DEFAULT_HOME_LAYOUT);
     setThemeColors(settings.themeColors ?? DEFAULT_THEME_COLORS);
+    setLinkPulsingEnabled(settings.linkPulsingEnabled ?? true);
   }, [settings]);
 
   function moveSection(index: number, direction: -1 | 1) {
@@ -117,6 +121,7 @@ export function AdminSiteSettingsForm({ settings }: AdminSiteSettingsFormProps) 
         siteTitleColor,
         homeLayout,
         themeColors,
+        linkPulsingEnabled,
       }),
     });
 
@@ -139,6 +144,7 @@ export function AdminSiteSettingsForm({ settings }: AdminSiteSettingsFormProps) 
     setSiteTitleColor(data.siteTitleColor ?? DEFAULT_SITE_TITLE_COLOR);
     setHomeLayout(data.homeLayout ?? DEFAULT_HOME_LAYOUT);
     setThemeColors(data.themeColors ?? DEFAULT_THEME_COLORS);
+    setLinkPulsingEnabled(data.linkPulsingEnabled ?? true);
     setStatus("Saved.");
     setAdminFlash("Site settings saved.");
     router.refresh();
@@ -276,6 +282,24 @@ export function AdminSiteSettingsForm({ settings }: AdminSiteSettingsFormProps) 
           Reset theme to defaults
         </button>
       </fieldset>
+
+      <label className="flex items-start gap-3 rounded-xl border border-border bg-surface px-4 py-3">
+        <input
+          type="checkbox"
+          checked={linkPulsingEnabled}
+          onChange={(event) => setLinkPulsingEnabled(event.target.checked)}
+          className="mt-1"
+        />
+        <span className="space-y-1">
+          <span className="block text-sm font-medium">
+            Pulsing project link buttons
+          </span>
+          <span className="block text-sm text-muted">
+            When disabled, project link buttons use a static border site-wide.
+            When enabled, each project link can turn pulsing on or off individually.
+          </span>
+        </span>
+      </label>
 
       <fieldset className="space-y-3 rounded-xl border border-border bg-surface p-4">
         <legend className="px-1 text-sm font-medium">Homepage sections</legend>

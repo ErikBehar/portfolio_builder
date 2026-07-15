@@ -10,6 +10,7 @@ export type ProjectLabel = {
 export type ProjectLink = {
   label: string;
   url: string;
+  pulse?: boolean;
 };
 
 export type MediaType = "image" | "video";
