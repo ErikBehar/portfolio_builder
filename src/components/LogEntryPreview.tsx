@@ -41,18 +41,18 @@ export function LogEntryPreview({ entry, headerColor }: LogEntryPreviewProps) {
         </div>
 
         {cover && (
-          <div className="mb-4 overflow-hidden rounded-lg border border-border">
+          <div className="mb-4 overflow-hidden rounded-lg border border-border bg-surface-elevated">
             {cover.type === "image" ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={cover.url}
                 alt={cover.caption ?? entry.title}
-                className="aspect-video w-full object-cover"
+                className="aspect-video w-full object-contain"
               />
             ) : (
               <video
                 src={cover.url}
-                className="aspect-video w-full object-cover"
+                className="aspect-video w-full object-contain"
                 muted
                 playsInline
               />

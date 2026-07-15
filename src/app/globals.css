@@ -33,3 +33,26 @@ body {
 ::selection {
   background: color-mix(in srgb, var(--accent) 35%, transparent);
 }
+
+@keyframes project-link-pulse {
+  0%,
+  100% {
+    border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 15%, transparent);
+  }
+  50% {
+    border-color: var(--accent);
+    box-shadow: 0 0 16px 3px color-mix(in srgb, var(--accent) 30%, transparent);
+  }
+}
+
+.project-link-pulse {
+  animation: project-link-pulse 2.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .project-link-pulse {
+    animation: none;
+    border-color: var(--accent);
+  }
+}

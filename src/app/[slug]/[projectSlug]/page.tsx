@@ -8,7 +8,7 @@ import { formatLogDate } from "@/lib/dates";
 import { getProjectBySlug } from "@/lib/projects";
 import { getSection } from "@/lib/sections";
 import { getSiteSettings } from "@/lib/siteSettings";
-import { inlineLinkClassName } from "@/lib/linkStyles";
+import { inlineLinkClassName, projectLinkButtonClassName } from "@/lib/linkStyles";
 
 export const dynamic = "force-dynamic";
 
@@ -71,11 +71,11 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
         )}
 
         {project.links.length > 0 && (
-          <div className="mt-6">
-            <h2 className="mb-3 text-sm font-medium uppercase tracking-[0.15em] text-muted">
-              Links:
+          <div className="mt-8">
+            <h2 className="mb-5 text-base font-semibold uppercase tracking-[0.15em] text-muted">
+              Links
             </h2>
-            <ul className="flex flex-wrap gap-3">
+            <ul className="flex flex-wrap gap-4">
               {project.links.map((link) => (
                 <li key={link.url}>
                   <TrackedExternalLink
@@ -85,7 +85,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                     label={link.label}
                     target="_blank"
                     rel="noreferrer"
-                    className="rounded-md border border-border px-3 py-1.5 text-sm transition-colors hover:border-accent hover:text-accent"
+                    className={projectLinkButtonClassName}
                   >
                     {link.label}
                   </TrackedExternalLink>

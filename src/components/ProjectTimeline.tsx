@@ -415,7 +415,7 @@ export function ProjectTimeline({
                 <img
                   src={hoveredCover.url}
                   alt=""
-                  className="mx-auto mb-3 h-20 w-full max-w-[10rem] rounded-md object-cover"
+                  className="mx-auto mb-3 h-20 w-full max-w-[10rem] rounded-md bg-surface object-contain"
                 />
               ) : null}
 

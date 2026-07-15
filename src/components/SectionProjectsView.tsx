@@ -131,7 +131,7 @@ export function SectionProjectsView({
 
       {mode === "list" ? (
         grouped ? (
-          <div className="space-y-14">
+          <div className="space-y-28">
             {grouped.map((group) => (
               <section key={group.slug}>
                 <CategoryGroupHeader
@@ -154,7 +154,7 @@ export function SectionProjectsView({
           <ProjectList projects={filteredProjects} emptyMessage={emptyMessage} />
         )
       ) : grouped ? (
-        <div className="space-y-14">
+        <div className="space-y-28">
           {grouped.map((group) => (
             <section key={group.slug}>
               <CategoryGroupHeader

@@ -39,7 +39,7 @@ function MediaThumbnail({
       onClick={onSelect}
       aria-label={item.caption ?? "View media"}
       aria-current={selected}
-      className={`relative h-16 w-24 shrink-0 overflow-hidden rounded-lg border-2 transition-colors ${
+      className={`relative h-16 w-24 shrink-0 overflow-hidden rounded-lg border-2 bg-surface-elevated transition-colors ${
         selected
           ? "border-accent"
           : "border-border opacity-70 hover:border-accent/60 hover:opacity-100"
@@ -47,10 +47,10 @@ function MediaThumbnail({
     >
       {item.type === "image" ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={item.url} alt="" className="h-full w-full object-cover" />
+        <img src={item.url} alt="" className="h-full w-full object-contain" />
       ) : (
         <>
-          <video src={item.url} muted className="h-full w-full object-cover" />
+          <video src={item.url} muted className="h-full w-full object-contain" />
           <span className="absolute inset-0 flex items-center justify-center bg-black/40 text-xs text-white">
             ▶
           </span>
@@ -92,7 +92,7 @@ export function MediaCarousel({ media }: MediaCarouselProps) {
             <img
               src={current.url}
               alt={current.caption ?? "Media"}
-              className="h-full w-full object-cover"
+              className="h-full w-full object-contain"
             />
           ) : (
             <video

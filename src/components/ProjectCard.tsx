@@ -40,12 +40,12 @@ export function ProjectCard({ project }: ProjectCardProps) {
           <img
             src={cover.url}
             alt={cover.caption ?? project.title}
-            className="absolute inset-0 h-full w-full object-cover object-center transition-transform group-hover:scale-[1.02]"
+            className="absolute inset-0 h-full w-full object-contain object-center"
           />
         ) : cover?.type === "video" ? (
           <video
             src={cover.url}
-            className="absolute inset-0 h-full w-full object-cover object-center"
+            className="absolute inset-0 h-full w-full object-contain object-center"
             muted
             playsInline
           />

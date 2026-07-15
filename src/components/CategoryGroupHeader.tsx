@@ -9,7 +9,7 @@ export function CategoryGroupHeader({
 }: CategoryGroupHeaderProps) {
   return (
     <div
-      className="mb-6 rounded-xl border border-border bg-surface px-5 py-4 shadow-sm"
+      className="mb-10 rounded-xl border border-border bg-surface px-5 py-4 shadow-sm"
       style={{ borderLeft: `4px solid ${accentColor}` }}
     >
       <h2
