@@ -139,60 +139,62 @@ export function SiteHeader({
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur-md">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
-        <div className="flex min-w-0 items-center gap-4">
-          {backHref ? (
-            <Link
-              href={backHref}
-              className="shrink-0 rounded-md border border-border px-3 py-1.5 text-sm text-muted transition-colors hover:border-accent hover:text-foreground"
-            >
-              ← Back
-            </Link>
-          ) : (
-            <span className="w-[72px] shrink-0" aria-hidden />
+      <div className="mx-auto flex max-w-6xl flex-col gap-3 px-6 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+        <div className="min-w-0 w-full sm:order-2 sm:flex-1">
+          <Link
+            href="/"
+            className="block text-xl font-semibold tracking-tight transition-opacity hover:opacity-80 sm:truncate sm:text-2xl"
+            style={{ color: siteTitleColor }}
+          >
+            {siteTitle}
+          </Link>
+          {!isHome && (
+            <p className="mt-0.5 text-sm capitalize text-muted sm:truncate">
+              {currentLabel}
+            </p>
           )}
-
-          <div className="min-w-0">
-            <Link
-              href="/"
-              className="block truncate text-xl font-semibold tracking-tight transition-opacity hover:opacity-80 sm:text-2xl"
-              style={{ color: siteTitleColor }}
-            >
-              {siteTitle}
-            </Link>
-            {!isHome && (
-              <p className="truncate text-sm capitalize text-muted">
-                {currentLabel}
-              </p>
-            )}
-          </div>
         </div>
 
-        <nav className="flex shrink-0 items-center gap-2 sm:gap-3">
-          {headerLinks.map((link) => (
-            <a
-              key={link.id}
-              href={link.url}
-              target={isExternalUrl(link.url) ? "_blank" : undefined}
-              rel={isExternalUrl(link.url) ? "noreferrer" : undefined}
-              className="inline-flex max-w-[11rem] items-center gap-2 rounded-md border border-border px-3 py-1.5 text-sm font-medium transition-colors hover:border-accent hover:text-accent sm:max-w-none"
-              onClick={() => {
-                if (isTrackableExternalUrl(link.url)) {
-                  trackLinkClick({
-                    url: link.url,
-                    source: "header",
-                    contextId: link.id,
-                    label: link.label,
-                  });
-                }
-              }}
-            >
-              <HeaderLinkIcon icon={link.icon} />
-              <span className="truncate">{link.label}</span>
-            </a>
-          ))}
-          <AdminMenu />
-        </nav>
+        <div className="flex w-full items-center justify-between gap-3 sm:contents">
+          <div className="shrink-0 sm:order-1">
+            {backHref ? (
+              <Link
+                href={backHref}
+                className="inline-flex shrink-0 rounded-md border border-border px-3 py-1.5 text-sm text-muted transition-colors hover:border-accent hover:text-foreground"
+              >
+                ← Back
+              </Link>
+            ) : (
+              <span className="hidden w-[72px] sm:inline-block" aria-hidden />
+            )}
+          </div>
+
+          <nav className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-2 sm:order-3 sm:flex-none sm:gap-3">
+            {headerLinks.map((link) => (
+              <a
+                key={link.id}
+                href={link.url}
+                target={isExternalUrl(link.url) ? "_blank" : undefined}
+                rel={isExternalUrl(link.url) ? "noreferrer" : undefined}
+                className="inline-flex max-w-[11rem] items-center gap-2 rounded-md border border-border px-3 py-1.5 text-sm font-medium transition-colors hover:border-accent hover:text-accent sm:max-w-none"
+                onClick={() => {
+                  if (isTrackableExternalUrl(link.url)) {
+                    trackLinkClick({
+                      url: link.url,
+                      source: "header",
+                      contextId: link.id,
+                      label: link.label,
+                    });
+                  }
+                }}
+              >
+                <HeaderLinkIcon icon={link.icon} />
+                <span className="truncate">{link.label}</span>
+              </a>
+            ))}
+            <AdminMenu />
+          </nav>
+        </div>
       </div>
     </header>
   );
