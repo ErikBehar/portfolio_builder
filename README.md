@@ -154,6 +154,11 @@ Copy `.env.example` to `.env`:
 |----------|---------|-------------|
 | `DATABASE_URL` | `file:./dev.db` | SQLite database path (relative to project root) |
 | `ADMIN_SECRET` | `change-me-in-production` | Admin login password and session signing key |
+| `RESEND_API_KEY` | `re_...` | Optional. Enables comment email alerts via [Resend](https://resend.com) |
+| `COMMENT_NOTIFY_FROM` | `Portfolio <onboarding@resend.dev>` | Optional. From address for comment emails (defaults to Resend’s onboarding sender) |
+| `SITE_URL` | `https://your-domain.com` | Optional. Public site URL used in notification email links |
+
+Comment email alerts are off by default. Turn them on in `/admin/site-settings` (checkbox + notification address). Without `RESEND_API_KEY`, the toggle does nothing and a warning is logged on the server.
 
 Default site title, description, footer text, and header buttons are created by `npm run db:seed` or on first site load. Edit them in admin at `/admin/site-settings` and `/admin/header-links`.
 

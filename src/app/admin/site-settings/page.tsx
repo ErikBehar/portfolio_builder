@@ -14,12 +14,13 @@ export default async function AdminSiteSettingsPage() {
         </p>
         <h1 className="text-3xl font-semibold tracking-tight">Site settings</h1>
         <p className="mt-2 text-muted">
-          Update site branding, homepage styling, footer text, and comment settings.
+          Update site branding, homepage styling, footer text, comment settings,
+          and email notification preferences.
         </p>
       </header>
 
       <AdminSiteSettingsForm
-        key={`${settings.updatedAt}-${settings.footerText}-${settings.commentsEnabled}-${settings.projectCommentsEnabled}-${settings.commentsVisible}-${settings.projectCommentsVisible}-${settings.homeHeaderColor}-${settings.siteTitleColor}`}
+        key={`${settings.updatedAt}-${settings.footerText}-${settings.commentsEnabled}-${settings.projectCommentsEnabled}-${settings.commentsVisible}-${settings.projectCommentsVisible}-${settings.commentEmailNotify}-${settings.commentNotifyEmail}-${settings.homeHeaderColor}-${settings.siteTitleColor}`}
         settings={settings}
       />
 

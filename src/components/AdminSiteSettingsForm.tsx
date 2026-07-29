@@ -55,6 +55,12 @@ export function AdminSiteSettingsForm({ settings }: AdminSiteSettingsFormProps) 
   const [linkPulsingEnabled, setLinkPulsingEnabled] = useState(
     settings.linkPulsingEnabled ?? true
   );
+  const [commentEmailNotify, setCommentEmailNotify] = useState(
+    settings.commentEmailNotify ?? false
+  );
+  const [commentNotifyEmail, setCommentNotifyEmail] = useState(
+    settings.commentNotifyEmail ?? ""
+  );
   const [status, setStatus] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -71,6 +77,8 @@ export function AdminSiteSettingsForm({ settings }: AdminSiteSettingsFormProps) 
     setHomeLayout(settings.homeLayout ?? DEFAULT_HOME_LAYOUT);
     setThemeColors(settings.themeColors ?? DEFAULT_THEME_COLORS);
     setLinkPulsingEnabled(settings.linkPulsingEnabled ?? true);
+    setCommentEmailNotify(settings.commentEmailNotify ?? false);
+    setCommentNotifyEmail(settings.commentNotifyEmail ?? "");
   }, [settings]);
 
   function moveSection(index: number, direction: -1 | 1) {
@@ -122,6 +130,8 @@ export function AdminSiteSettingsForm({ settings }: AdminSiteSettingsFormProps) 
         homeLayout,
         themeColors,
         linkPulsingEnabled,
+        commentEmailNotify,
+        commentNotifyEmail,
       }),
     });
 
@@ -145,6 +155,8 @@ export function AdminSiteSettingsForm({ settings }: AdminSiteSettingsFormProps) 
     setHomeLayout(data.homeLayout ?? DEFAULT_HOME_LAYOUT);
     setThemeColors(data.themeColors ?? DEFAULT_THEME_COLORS);
     setLinkPulsingEnabled(data.linkPulsingEnabled ?? true);
+    setCommentEmailNotify(data.commentEmailNotify ?? false);
+    setCommentNotifyEmail(data.commentNotifyEmail ?? "");
     setStatus("Saved.");
     setAdminFlash("Site settings saved.");
     router.refresh();
@@ -440,6 +452,42 @@ export function AdminSiteSettingsForm({ settings }: AdminSiteSettingsFormProps) 
           </span>
         </span>
       </label>
+
+      <fieldset className="space-y-4 rounded-xl border border-border bg-surface px-4 py-4">
+        <legend className="px-1 text-sm font-medium">Comment email alerts</legend>
+        <label className="flex items-start gap-3">
+          <input
+            type="checkbox"
+            checked={commentEmailNotify}
+            onChange={(event) => setCommentEmailNotify(event.target.checked)}
+            className="mt-1"
+          />
+          <span className="space-y-1">
+            <span className="block text-sm font-medium">
+              Email me when someone comments
+            </span>
+            <span className="block text-sm text-muted">
+              Sends an email whenever a new log or project comment is posted.
+              Requires <code className="text-xs">RESEND_API_KEY</code> in the
+              server environment.
+            </span>
+          </span>
+        </label>
+        <label className="block space-y-2">
+          <span className="text-sm font-medium">Notification email</span>
+          <input
+            type="email"
+            value={commentNotifyEmail}
+            onChange={(event) => setCommentNotifyEmail(event.target.value)}
+            className="w-full rounded-lg border border-border bg-background px-3 py-2"
+            placeholder="you@example.com"
+            required={commentEmailNotify}
+          />
+          <p className="text-sm text-muted">
+            Required when email alerts are enabled.
+          </p>
+        </label>
+      </fieldset>
 
       <div className="flex flex-wrap items-center gap-4">
         <button

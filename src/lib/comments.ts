@@ -4,6 +4,7 @@ import {
   COMMENT_AUTHOR_MAX_LENGTH,
   COMMENT_CONTENT_MAX_LENGTH,
 } from "@/lib/commentLimits";
+import { maybeSendCommentNotification } from "@/lib/commentEmail";
 import { getSiteSettings } from "@/lib/siteSettings";
 import type { LogComment } from "@/lib/types";
 
@@ -87,7 +88,8 @@ export async function getComments(
 export async function createComment(
   parentType: CommentParentType,
   parentId: string,
-  body: { author?: string; content?: string }
+  body: { author?: string; content?: string },
+  options?: { requestOrigin?: string | null }
 ): Promise<LogComment> {
   const input = validateCommentInput(body);
 
@@ -103,6 +105,16 @@ export async function createComment(
         content: input.content,
       },
     });
+
+    void maybeSendCommentNotification({
+      parentType: "log",
+      parentTitle: entry.title,
+      parentPath: `/log/${entry.slug}`,
+      author: input.author,
+      content: input.content,
+      requestOrigin: options?.requestOrigin,
+    });
+
     return serializeComment(comment);
   }
 
@@ -117,6 +129,16 @@ export async function createComment(
       content: input.content,
     },
   });
+
+  void maybeSendCommentNotification({
+    parentType: "project",
+    parentTitle: project.title,
+    parentPath: `/${project.section}/${project.slug}`,
+    author: input.author,
+    content: input.content,
+    requestOrigin: options?.requestOrigin,
+  });
+
   return serializeComment(comment);
 }
 

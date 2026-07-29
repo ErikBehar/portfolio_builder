@@ -43,6 +43,9 @@ function getBackHref(pathname: string): string | null {
     if (segments[1] === "site-settings") {
       return "/admin";
     }
+    if (segments[1] === "comments") {
+      return "/admin";
+    }
     if (segments[1] === "stats") {
       return "/admin";
     }
@@ -93,6 +96,9 @@ function getCurrentLabel(pathname: string, sectionTitles: Record<string, string>
     }
     if (segments[1] === "site-settings") {
       return "Admin · Site settings";
+    }
+    if (segments[1] === "comments") {
+      return "Admin · Comments";
     }
     if (segments[1] === "stats") {
       return "Admin · Stats";

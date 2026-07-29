@@ -29,7 +29,9 @@ export async function POST(request: Request, context: IdRouteContext) {
 
     const { id } = await context.params;
     const body = await request.json();
-    const comment = await createComment("log", id, body);
+    const comment = await createComment("log", id, body, {
+      requestOrigin: new URL(request.url).origin,
+    });
     return NextResponse.json(comment);
   } catch (error) {
     return handleApiError(error);

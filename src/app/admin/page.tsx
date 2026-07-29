@@ -1,11 +1,15 @@
 import Link from "next/link";
 import { AdminLogoutButton } from "@/components/AdminLogoutButton";
+import { getUnreadCommentCount } from "@/lib/adminComments";
 import { getProjectCountsBySection } from "@/lib/projects";
 import { getSections } from "@/lib/sections";
 
 export default async function AdminHomePage() {
-  const sections = await getSections();
-  const projectCounts = await getProjectCountsBySection();
+  const [sections, projectCounts, unreadComments] = await Promise.all([
+    getSections(),
+    getProjectCountsBySection(),
+    getUnreadCommentCount(),
+  ]);
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-12">
@@ -24,6 +28,23 @@ export default async function AdminHomePage() {
       </header>
 
       <div className="mb-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <Link
+          href="/admin/comments"
+          className="block rounded-xl border border-accent/40 bg-surface p-5 transition-colors hover:border-accent"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <h2 className="text-lg font-semibold">Comments</h2>
+            {unreadComments > 0 && (
+              <span className="rounded-full bg-accent px-2.5 py-0.5 text-xs font-medium text-accent-foreground">
+                {unreadComments} new
+              </span>
+            )}
+          </div>
+          <p className="mt-2 text-sm text-muted">
+            Review comments on log entries and projects, and mark them as seen.
+          </p>
+        </Link>
+
         <Link
           href="/admin/log"
           className="block rounded-xl border border-accent/40 bg-surface p-5 transition-colors hover:border-accent"
@@ -70,7 +91,7 @@ export default async function AdminHomePage() {
         >
           <h2 className="text-lg font-semibold">Site settings</h2>
           <p className="mt-2 text-sm text-muted">
-            Edit the site title and description used in the header and metadata.
+            Edit branding, comment visibility, and email notification preferences.
           </p>
         </Link>
 

@@ -26,12 +26,19 @@ Create a `.env` file on the server (do not commit it):
 ```env
 DATABASE_URL="file:./prod.db"
 ADMIN_SECRET="use-a-long-random-secret-here"
+# Optional comment email alerts (also enable in /admin/site-settings)
+# RESEND_API_KEY="re_..."
+# COMMENT_NOTIFY_FROM="Portfolio <you@yourdomain.com>"
+# SITE_URL="https://your-domain.com"
 ```
 
 | Variable | Production notes |
 |----------|------------------|
 | `DATABASE_URL` | Use an absolute path if the working directory may change, e.g. `file:/var/www/portfolio/data/prod.db`. Ensure the directory exists and is writable. |
 | `ADMIN_SECRET` | Set a strong, unique value. This is both the login password and the HMAC signing key for admin sessions. |
+| `RESEND_API_KEY` | Optional. Required for comment email alerts via Resend. |
+| `COMMENT_NOTIFY_FROM` | Optional. Verified from address for Resend (defaults to Resend’s onboarding sender). |
+| `SITE_URL` | Optional. Public site URL used in notification email links. |
 
 In production, the admin session cookie is set with the `secure` flag (HTTPS only).
 

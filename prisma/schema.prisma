@@ -34,6 +34,8 @@ model SiteSettings {
   homeLayout             String   @default("{\"sections\":[{\"id\":\"log\",\"visible\":true},{\"id\":\"featured\",\"visible\":true},{\"id\":\"projects\",\"visible\":true},{\"id\":\"timeline\",\"visible\":true}],\"timelineMode\":\"link\"}")
   themeColors            String   @default("{\"background\":\"#0c0f14\",\"foreground\":\"#e8edf5\",\"surface\":\"#12161d\",\"surfaceElevated\":\"#1a1f28\",\"border\":\"#2a3140\",\"muted\":\"#8b95a8\",\"accent\":\"#5b9fd4\",\"accentForeground\":\"#0c0f14\"}")
   linkPulsingEnabled     Boolean  @default(true)
+  commentEmailNotify     Boolean  @default(false)
+  commentNotifyEmail     String   @default("")
   updatedAt              DateTime @updatedAt
 }
 
@@ -127,25 +129,29 @@ model LogMedia {
 }
 
 model Comment {
-  id         String   @id @default(cuid())
+  id         String    @id @default(cuid())
   logEntryId String
   author     String
   content    String
-  createdAt  DateTime @default(now())
-  logEntry   LogEntry @relation(fields: [logEntryId], references: [id], onDelete: Cascade)
+  seenAt     DateTime?
+  createdAt  DateTime  @default(now())
+  logEntry   LogEntry  @relation(fields: [logEntryId], references: [id], onDelete: Cascade)
 
   @@index([logEntryId])
+  @@index([seenAt])
 }
 
 model ProjectComment {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   projectId String
   author    String
   content   String
-  createdAt DateTime @default(now())
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  seenAt    DateTime?
+  createdAt DateTime  @default(now())
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
+  @@index([seenAt])
 }
 
 model Visitor {

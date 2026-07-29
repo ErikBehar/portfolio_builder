@@ -34,7 +34,11 @@ export const DEFAULT_SITE_SETTINGS = {
   homeLayout: DEFAULT_HOME_LAYOUT,
   themeColors: DEFAULT_THEME_COLORS,
   linkPulsingEnabled: true,
+  commentEmailNotify: false,
+  commentNotifyEmail: "",
 };
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export type SiteSettings = {
   id: string;
@@ -50,6 +54,8 @@ export type SiteSettings = {
   homeLayout: HomeLayout;
   themeColors: ThemeColors;
   linkPulsingEnabled: boolean;
+  commentEmailNotify: boolean;
+  commentNotifyEmail: string;
   updatedAt: string;
 };
 
@@ -66,6 +72,8 @@ export function validateSiteSettingsInput(body: {
   homeLayout?: unknown;
   themeColors?: unknown;
   linkPulsingEnabled?: boolean;
+  commentEmailNotify?: boolean;
+  commentNotifyEmail?: string;
 }): string | null {
   if (!body.title?.trim()) return "Site title is required";
   if (!body.description?.trim()) return "Site description is required";
@@ -118,6 +126,28 @@ export function validateSiteSettingsInput(body: {
   ) {
     return "Link pulsing enabled must be true or false";
   }
+  if (
+    body.commentEmailNotify !== undefined &&
+    typeof body.commentEmailNotify !== "boolean"
+  ) {
+    return "Comment email notify must be true or false";
+  }
+  if (
+    body.commentNotifyEmail !== undefined &&
+    typeof body.commentNotifyEmail !== "string"
+  ) {
+    return "Comment notify email must be a string";
+  }
+  const notifyEmail =
+    typeof body.commentNotifyEmail === "string"
+      ? body.commentNotifyEmail.trim()
+      : "";
+  if (body.commentEmailNotify === true && !notifyEmail) {
+    return "Notification email is required when email alerts are enabled";
+  }
+  if (notifyEmail && !EMAIL_PATTERN.test(notifyEmail)) {
+    return "Notification email must be a valid email address";
+  }
   return null;
 }
 
@@ -145,7 +175,9 @@ export async function ensureDefaultSiteSettings() {
       existing.siteTitleColor == null ||
       existing.homeLayout == null ||
       existing.themeColors == null ||
-      existing.linkPulsingEnabled == null;
+      existing.linkPulsingEnabled == null ||
+      existing.commentEmailNotify == null ||
+      existing.commentNotifyEmail == null;
 
     if (needsBackfill) {
       await prisma.siteSettings.update({
@@ -175,6 +207,12 @@ export async function ensureDefaultSiteSettings() {
           linkPulsingEnabled:
             existing.linkPulsingEnabled ??
             DEFAULT_SITE_SETTINGS.linkPulsingEnabled,
+          commentEmailNotify:
+            existing.commentEmailNotify ??
+            DEFAULT_SITE_SETTINGS.commentEmailNotify,
+          commentNotifyEmail:
+            existing.commentNotifyEmail ??
+            DEFAULT_SITE_SETTINGS.commentNotifyEmail,
         },
       });
     }
@@ -197,6 +235,8 @@ export async function ensureDefaultSiteSettings() {
       homeLayout: serializeHomeLayout(DEFAULT_SITE_SETTINGS.homeLayout),
       themeColors: serializeThemeColors(DEFAULT_SITE_SETTINGS.themeColors),
       linkPulsingEnabled: DEFAULT_SITE_SETTINGS.linkPulsingEnabled,
+      commentEmailNotify: DEFAULT_SITE_SETTINGS.commentEmailNotify,
+      commentNotifyEmail: DEFAULT_SITE_SETTINGS.commentNotifyEmail,
     },
   });
 }
@@ -235,6 +275,10 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     themeColors: parseThemeColors(settings.themeColors),
     linkPulsingEnabled:
       settings.linkPulsingEnabled ?? DEFAULT_SITE_SETTINGS.linkPulsingEnabled,
+    commentEmailNotify:
+      settings.commentEmailNotify ?? DEFAULT_SITE_SETTINGS.commentEmailNotify,
+    commentNotifyEmail:
+      settings.commentNotifyEmail ?? DEFAULT_SITE_SETTINGS.commentNotifyEmail,
     updatedAt: settings.updatedAt.toISOString(),
   };
 }
@@ -252,6 +296,8 @@ export async function upsertSiteSettings(body: {
   homeLayout?: unknown;
   themeColors?: unknown;
   linkPulsingEnabled?: boolean;
+  commentEmailNotify?: boolean;
+  commentNotifyEmail?: string;
 }): Promise<SiteSettings> {
   const validationError = validateSiteSettingsInput(body);
   if (validationError) {
@@ -279,6 +325,11 @@ export async function upsertSiteSettings(body: {
     throw new ApiError(themeColorsResult, 400);
   }
   const themeColors = serializeThemeColors(themeColorsResult);
+  const commentEmailNotify = body.commentEmailNotify ?? false;
+  const commentNotifyEmail =
+    typeof body.commentNotifyEmail === "string"
+      ? body.commentNotifyEmail.trim()
+      : "";
 
   await prisma.siteSettings.upsert({
     where: { id: SITE_SETTINGS_ID },
@@ -297,6 +348,8 @@ export async function upsertSiteSettings(body: {
       homeLayout,
       themeColors,
       linkPulsingEnabled: body.linkPulsingEnabled ?? true,
+      commentEmailNotify,
+      commentNotifyEmail,
     },
     update: {
       title: body.title!.trim(),
@@ -312,6 +365,8 @@ export async function upsertSiteSettings(body: {
       homeLayout,
       themeColors,
       linkPulsingEnabled: body.linkPulsingEnabled ?? true,
+      commentEmailNotify,
+      commentNotifyEmail,
     },
   });
 

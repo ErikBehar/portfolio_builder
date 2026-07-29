@@ -50,6 +50,9 @@ In the Railway service → **Variables**:
 | `DATABASE_URL` | `file:/data/prod.db` | Recommended |
 | `DATA_DIR` | `/data` | Optional (this is the default) |
 | `RAILWAY_RUN_SEED` | `true` | Optional — seed defaults on first deploy only, then remove. Defaults are also created on first page load without seed. |
+| `RESEND_API_KEY` | Resend API key for comment email alerts | Optional |
+| `COMMENT_NOTIFY_FROM` | From address, e.g. `Portfolio <onboarding@resend.dev>` | Optional |
+| `SITE_URL` | Public site URL used in notification email links | Optional |
 
 Example:
 
