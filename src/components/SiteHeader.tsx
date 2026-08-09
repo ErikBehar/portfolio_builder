@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { AdminMenu } from "@/components/AdminMenu";
 import { HeaderLinkIcon } from "@/components/HeaderLinkIcon";
 import { isTrackableExternalUrl } from "@/lib/statsTypes";
@@ -14,6 +15,7 @@ type SiteHeaderProps = {
   headerLinks: HeaderLink[];
   siteTitle: string;
   siteTitleColor: string;
+  isAdmin?: boolean;
 };
 
 function formatSlug(slug: string): string {
@@ -128,14 +130,43 @@ export function SiteHeader({
   headerLinks,
   siteTitle,
   siteTitleColor,
+  isAdmin = false,
 }: SiteHeaderProps) {
   const pathname = usePathname();
+  const [adminEditHref, setAdminEditHref] = useState<string | null>(null);
   const sectionTitles = Object.fromEntries(
     sections.map((section) => [section.slug, section.title])
   );
   const backHref = getBackHref(pathname);
   const currentLabel = getCurrentLabel(pathname, sectionTitles);
   const isHome = pathname === "/";
+  const showAdminEdit = isAdmin && Boolean(adminEditHref);
+
+  useEffect(() => {
+    if (!isAdmin || pathname.startsWith("/admin")) {
+      setAdminEditHref(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    fetch(`/api/admin/edit-href?path=${encodeURIComponent(pathname)}`)
+      .then(async (response) => {
+        if (!response.ok) return null;
+        const data = (await response.json()) as { href?: string | null };
+        return data.href ?? null;
+      })
+      .then((href) => {
+        if (!cancelled) setAdminEditHref(href);
+      })
+      .catch(() => {
+        if (!cancelled) setAdminEditHref(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isAdmin, pathname]);
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur-md">
@@ -192,7 +223,15 @@ export function SiteHeader({
                 <span className="truncate">{link.label}</span>
               </a>
             ))}
-            <AdminMenu />
+            {showAdminEdit && adminEditHref && (
+              <Link
+                href={adminEditHref}
+                className="inline-flex items-center rounded-md border border-accent/50 bg-accent/10 px-3 py-1.5 text-sm font-medium text-accent transition-colors hover:border-accent hover:bg-accent/20"
+              >
+                Edit
+              </Link>
+            )}
+            <AdminMenu isAdmin={isAdmin} />
           </nav>
         </div>
       </div>

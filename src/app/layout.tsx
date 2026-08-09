@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { PageViewTracker } from "@/components/PageViewTracker";
+import { COOKIE_NAME, verifyAdminToken } from "@/lib/auth";
 import { getHeaderLinks } from "@/lib/headerLinks";
 import { getSections } from "@/lib/sections";
 import { getSiteSettings } from "@/lib/siteSettings";
@@ -33,6 +35,9 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const isAdmin = await verifyAdminToken(cookieStore.get(COOKIE_NAME)?.value);
+
   const [sections, headerLinks, siteSettings] = await Promise.all([
     getSections(),
     getHeaderLinks(),
@@ -51,6 +56,7 @@ export default async function RootLayout({
           headerLinks={headerLinks}
           siteTitle={siteSettings.title}
           siteTitleColor={siteSettings.siteTitleColor}
+          isAdmin={isAdmin}
         />
         <main className="flex-1">{children}</main>
         <SiteFooter footerText={siteSettings.footerText} />

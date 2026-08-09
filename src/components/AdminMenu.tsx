@@ -3,7 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
-export function AdminMenu() {
+type AdminMenuProps = {
+  isAdmin?: boolean;
+};
+
+export function AdminMenu({ isAdmin = false }: AdminMenuProps) {
   const router = useRouter();
   const pathname = usePathname();
   const menuRef = useRef<HTMLDivElement>(null);
@@ -15,6 +19,7 @@ export function AdminMenu() {
 
   const isAdminArea =
     pathname.startsWith("/admin") && pathname !== "/admin/login";
+  const showLoggedInMenu = isAdmin || isAdminArea;
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -106,15 +111,29 @@ export function AdminMenu() {
 
       {open && (
         <div className="absolute right-0 top-full z-50 mt-2 w-64 rounded-xl border border-border bg-surface p-3 shadow-xl">
-          {isAdminArea ? (
-            <button
-              type="button"
-              onClick={handleLogout}
-              disabled={loading}
-              className="w-full rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-surface-elevated disabled:opacity-60"
-            >
-              {loading ? "Logging out..." : "Log out"}
-            </button>
+          {showLoggedInMenu ? (
+            <div className="space-y-1">
+              {!isAdminArea && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpen(false);
+                    router.push("/admin");
+                  }}
+                  className="w-full rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-surface-elevated"
+                >
+                  Admin dashboard
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={handleLogout}
+                disabled={loading}
+                className="w-full rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-surface-elevated disabled:opacity-60"
+              >
+                {loading ? "Logging out..." : "Log out"}
+              </button>
+            </div>
           ) : !showPassword ? (
             <button
               type="button"
