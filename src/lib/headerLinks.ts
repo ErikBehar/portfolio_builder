@@ -96,7 +96,7 @@ export type HeaderLinkInput = {
   sortOrder?: number;
 };
 
-function parseHeaderLinkInput(body: HeaderLinkInput) {
+function parseHeaderLinkFields(body: HeaderLinkInput) {
   if (!body.label?.trim()) {
     throw new ApiError("Label is required", 400);
   }
@@ -115,15 +115,22 @@ function parseHeaderLinkInput(body: HeaderLinkInput) {
     label: body.label.trim(),
     url: body.url!.trim(),
     icon: body.icon!,
-    sortOrder: body.sortOrder ?? 0,
   };
 }
 
 export async function createHeaderLink(body: HeaderLinkInput) {
-  const input = parseHeaderLinkInput(body);
+  const fields = parseHeaderLinkFields(body);
+
+  const maxOrder = await prisma.headerLink.aggregate({
+    _max: { sortOrder: true },
+  });
+  const sortOrder =
+    typeof body.sortOrder === "number"
+      ? body.sortOrder
+      : (maxOrder._max.sortOrder ?? -1) + 1;
 
   const link = await prisma.headerLink.create({
-    data: input,
+    data: { ...fields, sortOrder },
   });
 
   return toHeaderLink(link);
@@ -135,14 +142,53 @@ export async function updateHeaderLink(id: string, body: HeaderLinkInput) {
     throw new ApiError("Header link not found", 404);
   }
 
-  const input = parseHeaderLinkInput(body);
+  const fields = parseHeaderLinkFields(body);
+  const sortOrder =
+    typeof body.sortOrder === "number" ? body.sortOrder : existing.sortOrder;
 
   const link = await prisma.headerLink.update({
     where: { id },
-    data: input,
+    data: { ...fields, sortOrder },
   });
 
   return toHeaderLink(link);
+}
+
+export async function reorderHeaderLinks(orderedIds: string[]) {
+  if (!Array.isArray(orderedIds) || orderedIds.length === 0) {
+    throw new ApiError("orderedIds must be a non-empty array", 400);
+  }
+
+  if (orderedIds.some((id) => typeof id !== "string" || !id.trim())) {
+    throw new ApiError("Each ordered id must be a non-empty string", 400);
+  }
+
+  const uniqueIds = new Set(orderedIds);
+  if (uniqueIds.size !== orderedIds.length) {
+    throw new ApiError("orderedIds must not contain duplicates", 400);
+  }
+
+  const existing = await prisma.headerLink.findMany({ select: { id: true } });
+  if (existing.length !== orderedIds.length) {
+    throw new ApiError("orderedIds must include every header link", 400);
+  }
+
+  for (const link of existing) {
+    if (!uniqueIds.has(link.id)) {
+      throw new ApiError("orderedIds must include every header link", 400);
+    }
+  }
+
+  await prisma.$transaction(
+    orderedIds.map((id, index) =>
+      prisma.headerLink.update({
+        where: { id },
+        data: { sortOrder: index },
+      })
+    )
+  );
+
+  return getHeaderLinks();
 }
 
 export async function deleteHeaderLink(id: string) {

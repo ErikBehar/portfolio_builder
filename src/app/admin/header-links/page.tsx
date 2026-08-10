@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { HeaderLinkIcon } from "@/components/HeaderLinkIcon";
+import { AdminHeaderLinksReorder } from "@/components/AdminHeaderLinksReorder";
 import { getHeaderLinks } from "@/lib/headerLinks";
 
 export default async function AdminHeaderLinksPage() {
@@ -15,7 +15,7 @@ export default async function AdminHeaderLinksPage() {
           <h1 className="text-3xl font-semibold tracking-tight">Header links</h1>
           <p className="mt-2 text-muted">
             Manage the buttons shown in the site header, such as email, CV, and
-            social links.
+            social links. Drag to reorder them horizontally.
           </p>
         </div>
 
@@ -32,34 +32,7 @@ export default async function AdminHeaderLinksPage() {
           No header links yet. Create your first one above.
         </div>
       ) : (
-        <div className="space-y-3">
-          {links.map((link) => (
-            <div
-              key={link.id}
-              className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-border bg-surface px-5 py-4"
-            >
-              <div className="flex min-w-0 items-center gap-3">
-                <span className="inline-flex rounded-md border border-border bg-surface-elevated p-2">
-                  <HeaderLinkIcon icon={link.icon} />
-                </span>
-                <div className="min-w-0">
-                  <h2 className="font-medium">{link.label}</h2>
-                  <p className="truncate text-sm text-muted">{link.url}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <span className="text-sm text-muted">Order {link.sortOrder}</span>
-                <Link
-                  href={`/admin/header-links/${link.id}`}
-                  className="text-sm text-accent hover:underline"
-                >
-                  Edit
-                </Link>
-              </div>
-            </div>
-          ))}
-        </div>
+        <AdminHeaderLinksReorder links={links} />
       )}
 
       <p className="mt-10 text-sm text-muted">

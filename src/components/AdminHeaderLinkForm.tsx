@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { HeaderLinkIcon } from "@/components/HeaderLinkIcon";
@@ -19,7 +20,6 @@ export function AdminHeaderLinkForm({ link }: AdminHeaderLinkFormProps) {
   const [label, setLabel] = useState(link?.label ?? "");
   const [url, setUrl] = useState(link?.url ?? "");
   const [icon, setIcon] = useState<HeaderLinkIconSlug>(link?.icon ?? "link");
-  const [sortOrder, setSortOrder] = useState(link?.sortOrder ?? 0);
   const [status, setStatus] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -33,7 +33,7 @@ export function AdminHeaderLinkForm({ link }: AdminHeaderLinkFormProps) {
       {
         method: link ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ label, url, icon, sortOrder }),
+        body: JSON.stringify({ label, url, icon }),
       }
     );
 
@@ -116,16 +116,13 @@ export function AdminHeaderLinkForm({ link }: AdminHeaderLinkFormProps) {
         </div>
       </label>
 
-      <label className="block max-w-xs space-y-2">
-        <span className="text-sm font-medium">Sort order</span>
-        <input
-          type="number"
-          value={sortOrder}
-          onChange={(event) => setSortOrder(Number(event.target.value))}
-          className="w-full rounded-lg border border-border bg-surface px-3 py-2"
-        />
-        <span className="text-xs text-muted">Lower numbers appear first in the header.</span>
-      </label>
+      <p className="text-sm text-muted">
+        To change the order of header buttons, drag them on the{" "}
+        <Link href="/admin/header-links" className="text-accent hover:underline">
+          header links
+        </Link>{" "}
+        list.
+      </p>
 
       {status && <p className="text-sm text-muted">{status}</p>}
 
