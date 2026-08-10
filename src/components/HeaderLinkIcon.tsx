@@ -2,10 +2,27 @@ import type { HeaderLinkIconSlug } from "@/lib/headerLinkIcons";
 
 type HeaderLinkIconProps = {
   icon: HeaderLinkIconSlug;
+  customIconUrl?: string | null;
   className?: string;
 };
 
-export function HeaderLinkIcon({ icon, className = "h-4 w-4" }: HeaderLinkIconProps) {
+export function HeaderLinkIcon({
+  icon,
+  customIconUrl,
+  className = "h-4 w-4",
+}: HeaderLinkIconProps) {
+  if (customIconUrl) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={customIconUrl}
+        alt=""
+        className={`${className} object-contain`}
+        aria-hidden
+      />
+    );
+  }
+
   const props = {
     xmlns: "http://www.w3.org/2000/svg",
     viewBox: "0 0 24 24",

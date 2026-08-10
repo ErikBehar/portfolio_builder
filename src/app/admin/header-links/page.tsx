@@ -1,9 +1,14 @@
 import Link from "next/link";
+import { AdminHeaderLinkIconSize } from "@/components/AdminHeaderLinkIconSize";
 import { AdminHeaderLinksReorder } from "@/components/AdminHeaderLinksReorder";
 import { getHeaderLinks } from "@/lib/headerLinks";
+import { getSiteSettings } from "@/lib/siteSettings";
 
 export default async function AdminHeaderLinksPage() {
-  const links = await getHeaderLinks();
+  const [links, settings] = await Promise.all([
+    getHeaderLinks(),
+    getSiteSettings(),
+  ]);
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-12">
@@ -26,6 +31,8 @@ export default async function AdminHeaderLinksPage() {
           + New link
         </Link>
       </header>
+
+      <AdminHeaderLinkIconSize value={settings.headerLinkIconSize} />
 
       {links.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border bg-surface p-10 text-center text-muted">

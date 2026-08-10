@@ -56,6 +56,7 @@ export default async function RootLayout({
           headerLinks={headerLinks}
           siteTitle={siteSettings.title}
           siteTitleColor={siteSettings.siteTitleColor}
+          headerLinkIconSize={siteSettings.headerLinkIconSize}
           isAdmin={isAdmin}
         />
         <main className="flex-1">{children}</main>

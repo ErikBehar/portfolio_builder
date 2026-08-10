@@ -9,12 +9,17 @@ import { isTrackableExternalUrl } from "@/lib/statsTypes";
 import { trackLinkClick } from "@/lib/clientStats";
 import type { HeaderLink } from "@/lib/headerLinks";
 import type { Section } from "@/lib/sections";
+import {
+  getHeaderLinkIconSizeClass,
+  type HeaderLinkIconSize,
+} from "@/lib/headerLinkIcons";
 
 type SiteHeaderProps = {
   sections: Section[];
   headerLinks: HeaderLink[];
   siteTitle: string;
   siteTitleColor: string;
+  headerLinkIconSize?: HeaderLinkIconSize;
   isAdmin?: boolean;
 };
 
@@ -130,10 +135,12 @@ export function SiteHeader({
   headerLinks,
   siteTitle,
   siteTitleColor,
+  headerLinkIconSize = "small",
   isAdmin = false,
 }: SiteHeaderProps) {
   const pathname = usePathname();
   const [adminEditHref, setAdminEditHref] = useState<string | null>(null);
+  const iconClassName = getHeaderLinkIconSizeClass(headerLinkIconSize);
   const sectionTitles = Object.fromEntries(
     sections.map((section) => [section.slug, section.title])
   );
@@ -219,7 +226,11 @@ export function SiteHeader({
                   }
                 }}
               >
-                <HeaderLinkIcon icon={link.icon} />
+                <HeaderLinkIcon
+                  icon={link.icon}
+                  customIconUrl={link.customIconUrl}
+                  className={iconClassName}
+                />
                 <span className="truncate">{link.label}</span>
               </a>
             ))}

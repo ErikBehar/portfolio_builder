@@ -18,6 +18,11 @@ import {
   validateThemeColorsInput,
   type ThemeColors,
 } from "@/lib/themeColors";
+import {
+  normalizeHeaderLinkIconSize,
+  validateHeaderLinkIconSize,
+  type HeaderLinkIconSize,
+} from "@/lib/headerLinkIcons";
 
 export const SITE_SETTINGS_ID = "default";
 
@@ -36,6 +41,7 @@ export const DEFAULT_SITE_SETTINGS = {
   linkPulsingEnabled: true,
   commentEmailNotify: false,
   commentNotifyEmail: "",
+  headerLinkIconSize: "small" as HeaderLinkIconSize,
 };
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -56,6 +62,7 @@ export type SiteSettings = {
   linkPulsingEnabled: boolean;
   commentEmailNotify: boolean;
   commentNotifyEmail: string;
+  headerLinkIconSize: HeaderLinkIconSize;
   updatedAt: string;
 };
 
@@ -74,6 +81,7 @@ export function validateSiteSettingsInput(body: {
   linkPulsingEnabled?: boolean;
   commentEmailNotify?: boolean;
   commentNotifyEmail?: string;
+  headerLinkIconSize?: string;
 }): string | null {
   if (!body.title?.trim()) return "Site title is required";
   if (!body.description?.trim()) return "Site description is required";
@@ -148,6 +156,13 @@ export function validateSiteSettingsInput(body: {
   if (notifyEmail && !EMAIL_PATTERN.test(notifyEmail)) {
     return "Notification email must be a valid email address";
   }
+  if (body.headerLinkIconSize !== undefined) {
+    if (typeof body.headerLinkIconSize !== "string") {
+      return "Header link icon size must be a string";
+    }
+    const sizeError = validateHeaderLinkIconSize(body.headerLinkIconSize);
+    if (sizeError) return sizeError;
+  }
   return null;
 }
 
@@ -177,7 +192,8 @@ export async function ensureDefaultSiteSettings() {
       existing.themeColors == null ||
       existing.linkPulsingEnabled == null ||
       existing.commentEmailNotify == null ||
-      existing.commentNotifyEmail == null;
+      existing.commentNotifyEmail == null ||
+      existing.headerLinkIconSize == null;
 
     if (needsBackfill) {
       await prisma.siteSettings.update({
@@ -213,6 +229,9 @@ export async function ensureDefaultSiteSettings() {
           commentNotifyEmail:
             existing.commentNotifyEmail ??
             DEFAULT_SITE_SETTINGS.commentNotifyEmail,
+          headerLinkIconSize:
+            existing.headerLinkIconSize ??
+            DEFAULT_SITE_SETTINGS.headerLinkIconSize,
         },
       });
     }
@@ -237,6 +256,7 @@ export async function ensureDefaultSiteSettings() {
       linkPulsingEnabled: DEFAULT_SITE_SETTINGS.linkPulsingEnabled,
       commentEmailNotify: DEFAULT_SITE_SETTINGS.commentEmailNotify,
       commentNotifyEmail: DEFAULT_SITE_SETTINGS.commentNotifyEmail,
+      headerLinkIconSize: DEFAULT_SITE_SETTINGS.headerLinkIconSize,
     },
   });
 }
@@ -279,6 +299,9 @@ export async function getSiteSettings(): Promise<SiteSettings> {
       settings.commentEmailNotify ?? DEFAULT_SITE_SETTINGS.commentEmailNotify,
     commentNotifyEmail:
       settings.commentNotifyEmail ?? DEFAULT_SITE_SETTINGS.commentNotifyEmail,
+    headerLinkIconSize: normalizeHeaderLinkIconSize(
+      settings.headerLinkIconSize ?? DEFAULT_SITE_SETTINGS.headerLinkIconSize
+    ),
     updatedAt: settings.updatedAt.toISOString(),
   };
 }
@@ -298,6 +321,7 @@ export async function upsertSiteSettings(body: {
   linkPulsingEnabled?: boolean;
   commentEmailNotify?: boolean;
   commentNotifyEmail?: string;
+  headerLinkIconSize?: string;
 }): Promise<SiteSettings> {
   const validationError = validateSiteSettingsInput(body);
   if (validationError) {
@@ -330,6 +354,9 @@ export async function upsertSiteSettings(body: {
     typeof body.commentNotifyEmail === "string"
       ? body.commentNotifyEmail.trim()
       : "";
+  const headerLinkIconSize = normalizeHeaderLinkIconSize(
+    body.headerLinkIconSize ?? DEFAULT_SITE_SETTINGS.headerLinkIconSize
+  );
 
   await prisma.siteSettings.upsert({
     where: { id: SITE_SETTINGS_ID },
@@ -350,6 +377,7 @@ export async function upsertSiteSettings(body: {
       linkPulsingEnabled: body.linkPulsingEnabled ?? true,
       commentEmailNotify,
       commentNotifyEmail,
+      headerLinkIconSize,
     },
     update: {
       title: body.title!.trim(),
@@ -367,6 +395,7 @@ export async function upsertSiteSettings(body: {
       linkPulsingEnabled: body.linkPulsingEnabled ?? true,
       commentEmailNotify,
       commentNotifyEmail,
+      ...(body.headerLinkIconSize !== undefined ? { headerLinkIconSize } : {}),
     },
   });
 

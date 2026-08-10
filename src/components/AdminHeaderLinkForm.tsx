@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { HeaderLinkIcon } from "@/components/HeaderLinkIcon";
+import { uploadFile } from "@/lib/clientUpload";
 import {
   HEADER_LINK_ICONS,
   type HeaderLinkIconSlug,
@@ -20,8 +21,40 @@ export function AdminHeaderLinkForm({ link }: AdminHeaderLinkFormProps) {
   const [label, setLabel] = useState(link?.label ?? "");
   const [url, setUrl] = useState(link?.url ?? "");
   const [icon, setIcon] = useState<HeaderLinkIconSlug>(link?.icon ?? "link");
+  const [customIconUrl, setCustomIconUrl] = useState<string | null>(
+    link?.customIconUrl ?? null
+  );
   const [status, setStatus] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+
+  async function handleCustomIconChange(
+    event: React.ChangeEvent<HTMLInputElement>
+  ) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setStatus("Custom icon must be an image file");
+      return;
+    }
+
+    setIsUploading(true);
+    setStatus("Uploading icon...");
+
+    try {
+      const uploadedUrl = await uploadFile(file);
+      setCustomIconUrl(uploadedUrl);
+      setStatus("Custom icon ready. Save the link to apply it.");
+    } catch (error) {
+      setStatus(
+        error instanceof Error ? error.message : "Failed to upload icon"
+      );
+    } finally {
+      setIsUploading(false);
+    }
+  }
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -33,7 +66,7 @@ export function AdminHeaderLinkForm({ link }: AdminHeaderLinkFormProps) {
       {
         method: link ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ label, url, icon }),
+        body: JSON.stringify({ label, url, icon, customIconUrl }),
       }
     );
 
@@ -97,15 +130,22 @@ export function AdminHeaderLinkForm({ link }: AdminHeaderLinkFormProps) {
       </label>
 
       <label className="block max-w-xs space-y-2">
-        <span className="text-sm font-medium">Icon</span>
+        <span className="text-sm font-medium">Built-in icon</span>
         <div className="flex items-center gap-3">
           <span className="inline-flex rounded-md border border-border bg-surface-elevated p-2 text-foreground">
-            <HeaderLinkIcon icon={icon} />
+            <HeaderLinkIcon
+              icon={icon}
+              customIconUrl={customIconUrl}
+              className="h-8 w-8"
+            />
           </span>
           <select
             value={icon}
-            onChange={(event) => setIcon(event.target.value as HeaderLinkIconSlug)}
+            onChange={(event) =>
+              setIcon(event.target.value as HeaderLinkIconSlug)
+            }
             className="w-full rounded-lg border border-border bg-surface px-3 py-2"
+            disabled={Boolean(customIconUrl)}
           >
             {HEADER_LINK_ICONS.map((entry) => (
               <option key={entry.slug} value={entry.slug}>
@@ -114,14 +154,49 @@ export function AdminHeaderLinkForm({ link }: AdminHeaderLinkFormProps) {
             ))}
           </select>
         </div>
+        {customIconUrl && (
+          <span className="text-xs text-muted">
+            Built-in icon is unused while a custom image is set.
+          </span>
+        )}
       </label>
+
+      <div className="space-y-3 rounded-xl border border-border bg-surface px-4 py-4">
+        <div className="space-y-1">
+          <p className="text-sm font-medium">Custom icon image</p>
+          <p className="text-sm text-muted">
+            Upload a PNG, SVG, or other image to use instead of the built-in icon.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="inline-flex cursor-pointer rounded-lg border border-border px-3 py-2 text-sm transition-colors hover:border-accent">
+            {isUploading ? "Uploading..." : "Upload image"}
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              disabled={isUploading || isSubmitting}
+              onChange={handleCustomIconChange}
+            />
+          </label>
+          {customIconUrl && (
+            <button
+              type="button"
+              onClick={() => setCustomIconUrl(null)}
+              className="rounded-lg border border-border px-3 py-2 text-sm text-muted transition-colors hover:border-accent hover:text-foreground"
+            >
+              Remove custom icon
+            </button>
+          )}
+        </div>
+      </div>
 
       <p className="text-sm text-muted">
         To change the order of header buttons, drag them on the{" "}
         <Link href="/admin/header-links" className="text-accent hover:underline">
           header links
         </Link>{" "}
-        list.
+        list. Icon size is also set there.
       </p>
 
       {status && <p className="text-sm text-muted">{status}</p>}
@@ -129,7 +204,7 @@ export function AdminHeaderLinkForm({ link }: AdminHeaderLinkFormProps) {
       <div className="flex flex-wrap gap-3">
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isSubmitting || isUploading}
           className="rounded-lg bg-accent px-5 py-2.5 text-sm font-medium text-accent-foreground disabled:opacity-60"
         >
           {link ? "Update link" : "Create link"}

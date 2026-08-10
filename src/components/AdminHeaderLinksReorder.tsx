@@ -82,7 +82,10 @@ function SortableHeaderLinkChip({ link }: { link: HeaderLink }) {
       >
         <DragHandleIcon />
         <span className="inline-flex rounded-md border border-border bg-surface-elevated p-2">
-          <HeaderLinkIcon icon={link.icon} />
+          <HeaderLinkIcon
+            icon={link.icon}
+            customIconUrl={link.customIconUrl}
+          />
         </span>
         <span className="whitespace-nowrap text-sm font-medium">{link.label}</span>
       </button>
@@ -101,7 +104,10 @@ function HeaderLinkChipPreview({ link }: { link: HeaderLink }) {
     <div className="flex shrink-0 items-center gap-2 rounded-xl border border-accent bg-surface px-4 py-3 shadow-xl">
       <DragHandleIcon />
       <span className="inline-flex rounded-md border border-border bg-surface-elevated p-2">
-        <HeaderLinkIcon icon={link.icon} />
+        <HeaderLinkIcon
+          icon={link.icon}
+          customIconUrl={link.customIconUrl}
+        />
       </span>
       <span className="whitespace-nowrap text-sm font-medium">{link.label}</span>
     </div>

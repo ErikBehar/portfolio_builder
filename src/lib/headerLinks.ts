@@ -2,6 +2,11 @@ import { prisma } from "@/lib/db";
 import { ApiError } from "@/lib/apiErrors";
 import { validateHeaderLinkIcon } from "@/lib/headerLinkIcons";
 import type { HeaderLinkIconSlug } from "@/lib/headerLinkIcons";
+import {
+  deleteUploadFile,
+  deleteUploadFiles,
+  isManagedUploadUrl,
+} from "@/lib/uploads";
 
 export const DEFAULT_HEADER_LINKS: Array<{
   label: string;
@@ -28,6 +33,7 @@ export type HeaderLink = {
   label: string;
   url: string;
   icon: HeaderLinkIconSlug;
+  customIconUrl: string | null;
   sortOrder: number;
 };
 
@@ -36,6 +42,7 @@ type HeaderLinkRecord = {
   label: string;
   url: string;
   icon: string;
+  customIconUrl: string | null;
   sortOrder: number;
 };
 
@@ -45,6 +52,7 @@ function toHeaderLink(record: HeaderLinkRecord): HeaderLink {
     label: record.label,
     url: record.url,
     icon: record.icon as HeaderLinkIconSlug,
+    customIconUrl: record.customIconUrl ?? null,
     sortOrder: record.sortOrder,
   };
 }
@@ -64,6 +72,25 @@ export function validateHeaderLinkUrl(url: string): string | null {
   }
 
   return "URL must start with http://, https://, mailto:, /, or be #";
+}
+
+function parseCustomIconUrl(value: unknown): string | null {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+
+  if (typeof value !== "string") {
+    throw new ApiError("Custom icon URL must be a string", 400);
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  if (!isManagedUploadUrl(trimmed) && !trimmed.startsWith("/uploads/")) {
+    throw new ApiError("Custom icon must be an uploaded image", 400);
+  }
+
+  return trimmed;
 }
 
 export async function ensureDefaultHeaderLinks() {
@@ -93,6 +120,7 @@ export type HeaderLinkInput = {
   label?: string;
   url?: string;
   icon?: string;
+  customIconUrl?: string | null;
   sortOrder?: number;
 };
 
@@ -115,6 +143,10 @@ function parseHeaderLinkFields(body: HeaderLinkInput) {
     label: body.label.trim(),
     url: body.url!.trim(),
     icon: body.icon!,
+    customIconUrl:
+      body.customIconUrl !== undefined
+        ? parseCustomIconUrl(body.customIconUrl)
+        : undefined,
   };
 }
 
@@ -130,7 +162,13 @@ export async function createHeaderLink(body: HeaderLinkInput) {
       : (maxOrder._max.sortOrder ?? -1) + 1;
 
   const link = await prisma.headerLink.create({
-    data: { ...fields, sortOrder },
+    data: {
+      label: fields.label,
+      url: fields.url,
+      icon: fields.icon,
+      customIconUrl: fields.customIconUrl ?? null,
+      sortOrder,
+    },
   });
 
   return toHeaderLink(link);
@@ -145,11 +183,28 @@ export async function updateHeaderLink(id: string, body: HeaderLinkInput) {
   const fields = parseHeaderLinkFields(body);
   const sortOrder =
     typeof body.sortOrder === "number" ? body.sortOrder : existing.sortOrder;
+  const customIconUrl =
+    fields.customIconUrl !== undefined
+      ? fields.customIconUrl
+      : existing.customIconUrl;
 
   const link = await prisma.headerLink.update({
     where: { id },
-    data: { ...fields, sortOrder },
+    data: {
+      label: fields.label,
+      url: fields.url,
+      icon: fields.icon,
+      customIconUrl,
+      sortOrder,
+    },
   });
+
+  if (
+    existing.customIconUrl &&
+    existing.customIconUrl !== customIconUrl
+  ) {
+    await deleteUploadFile(existing.customIconUrl);
+  }
 
   return toHeaderLink(link);
 }
@@ -198,4 +253,8 @@ export async function deleteHeaderLink(id: string) {
   }
 
   await prisma.headerLink.delete({ where: { id } });
+
+  if (link.customIconUrl) {
+    await deleteUploadFiles([link.customIconUrl]);
+  }
 }
