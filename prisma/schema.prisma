@@ -41,14 +41,21 @@ model SiteSettings {
 }
 
 model HeaderLink {
-  id            String   @id @default(cuid())
-  label         String
-  url           String
-  icon          String
-  customIconUrl String?
-  sortOrder     Int      @default(0)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id        String   @id @default(cuid())
+  label     String
+  url       String
+  icon      String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model HeaderLinkCustomIcon {
+  id        String   @id @default(cuid())
+  label     String
+  url       String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Label {

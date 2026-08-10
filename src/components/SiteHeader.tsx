@@ -228,7 +228,7 @@ export function SiteHeader({
               >
                 <HeaderLinkIcon
                   icon={link.icon}
-                  customIconUrl={link.customIconUrl}
+                  iconImageUrl={link.iconImageUrl}
                   className={iconClassName}
                 />
                 <span className="truncate">{link.label}</span>

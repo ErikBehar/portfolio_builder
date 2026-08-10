@@ -1,27 +1,59 @@
 import type { HeaderLinkIconSlug } from "@/lib/headerLinkIcons";
+import { isHeaderLinkIconSlug } from "@/lib/headerLinkIcons";
 
 type HeaderLinkIconProps = {
-  icon: HeaderLinkIconSlug;
-  customIconUrl?: string | null;
+  icon: string;
+  iconImageUrl?: string | null;
   className?: string;
 };
 
+function isSvgIconUrl(url: string): boolean {
+  const path = url.split("?")[0]?.toLowerCase() ?? "";
+  return path.endsWith(".svg");
+}
+
 export function HeaderLinkIcon({
   icon,
-  customIconUrl,
+  iconImageUrl,
   className = "h-4 w-4",
 }: HeaderLinkIconProps) {
-  if (customIconUrl) {
+  if (iconImageUrl) {
+    // SVGs loaded via <img> cannot inherit CSS color, so currentColor/white
+    // silhouettes often render black. Mask them so they follow currentColor
+    // like the built-in stroke icons.
+    if (isSvgIconUrl(iconImageUrl)) {
+      return (
+        <span
+          className={`${className} inline-block shrink-0 bg-current`}
+          style={{
+            maskImage: `url("${iconImageUrl}")`,
+            WebkitMaskImage: `url("${iconImageUrl}")`,
+            maskSize: "contain",
+            WebkitMaskSize: "contain",
+            maskRepeat: "no-repeat",
+            WebkitMaskRepeat: "no-repeat",
+            maskPosition: "center",
+            WebkitMaskPosition: "center",
+          }}
+          aria-hidden
+        />
+      );
+    }
+
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img
-        src={customIconUrl}
+        src={iconImageUrl}
         alt=""
         className={`${className} object-contain`}
         aria-hidden
       />
     );
   }
+
+  const builtinIcon: HeaderLinkIconSlug = isHeaderLinkIconSlug(icon)
+    ? icon
+    : "link";
 
   const props = {
     xmlns: "http://www.w3.org/2000/svg",
@@ -33,7 +65,7 @@ export function HeaderLinkIcon({
     "aria-hidden": true as const,
   };
 
-  switch (icon) {
+  switch (builtinIcon) {
     case "envelope":
       return (
         <svg {...props}>

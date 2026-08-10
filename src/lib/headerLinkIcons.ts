@@ -12,6 +12,8 @@ export const HEADER_LINK_ICONS = [
 
 export type HeaderLinkIconSlug = (typeof HEADER_LINK_ICONS)[number]["slug"];
 
+export const CUSTOM_ICON_PREFIX = "custom:";
+
 export const HEADER_LINK_ICON_SIZES = [
   { value: "small", label: "Small", className: "h-4 w-4", px: 16 },
   { value: "medium", label: "Medium", className: "h-8 w-8", px: 32 },
@@ -35,11 +37,24 @@ export function isHeaderLinkIconSize(value: string): value is HeaderLinkIconSize
   return iconSizes.has(value);
 }
 
+export function isCustomHeaderLinkIcon(value: string): boolean {
+  return value.startsWith(CUSTOM_ICON_PREFIX) && value.length > CUSTOM_ICON_PREFIX.length;
+}
+
+export function customIconIdFromValue(value: string): string | null {
+  if (!isCustomHeaderLinkIcon(value)) return null;
+  return value.slice(CUSTOM_ICON_PREFIX.length);
+}
+
+export function customIconValueFromId(id: string): string {
+  return `${CUSTOM_ICON_PREFIX}${id}`;
+}
+
 export function validateHeaderLinkIcon(icon: string): string | null {
-  if (!isHeaderLinkIconSlug(icon)) {
-    return "Choose a valid icon";
+  if (isHeaderLinkIconSlug(icon) || isCustomHeaderLinkIcon(icon)) {
+    return null;
   }
-  return null;
+  return "Choose a valid icon";
 }
 
 export function validateHeaderLinkIconSize(size: string): string | null {

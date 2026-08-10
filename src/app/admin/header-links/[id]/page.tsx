@@ -1,6 +1,9 @@
 import { notFound } from "next/navigation";
 import { AdminHeaderLinkForm } from "@/components/AdminHeaderLinkForm";
-import { getHeaderLinkById } from "@/lib/headerLinks";
+import {
+  getHeaderLinkById,
+  getHeaderLinkCustomIcons,
+} from "@/lib/headerLinks";
 
 type EditHeaderLinkPageProps = {
   params: Promise<{ id: string }>;
@@ -8,7 +11,10 @@ type EditHeaderLinkPageProps = {
 
 export default async function EditHeaderLinkPage({ params }: EditHeaderLinkPageProps) {
   const { id } = await params;
-  const link = await getHeaderLinkById(id);
+  const [link, customIcons] = await Promise.all([
+    getHeaderLinkById(id),
+    getHeaderLinkCustomIcons(),
+  ]);
 
   if (!link) {
     notFound();
@@ -23,7 +29,7 @@ export default async function EditHeaderLinkPage({ params }: EditHeaderLinkPageP
         <h1 className="text-3xl font-semibold tracking-tight">Edit header link</h1>
       </header>
 
-      <AdminHeaderLinkForm link={link} />
+      <AdminHeaderLinkForm link={link} customIcons={customIcons} />
     </div>
   );
 }

@@ -84,7 +84,7 @@ function SortableHeaderLinkChip({ link }: { link: HeaderLink }) {
         <span className="inline-flex rounded-md border border-border bg-surface-elevated p-2">
           <HeaderLinkIcon
             icon={link.icon}
-            customIconUrl={link.customIconUrl}
+            iconImageUrl={link.iconImageUrl}
           />
         </span>
         <span className="whitespace-nowrap text-sm font-medium">{link.label}</span>
@@ -106,7 +106,7 @@ function HeaderLinkChipPreview({ link }: { link: HeaderLink }) {
       <span className="inline-flex rounded-md border border-border bg-surface-elevated p-2">
         <HeaderLinkIcon
           icon={link.icon}
-          customIconUrl={link.customIconUrl}
+          iconImageUrl={link.iconImageUrl}
         />
       </span>
       <span className="whitespace-nowrap text-sm font-medium">{link.label}</span>
