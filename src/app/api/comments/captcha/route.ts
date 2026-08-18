@@ -29,7 +29,11 @@ export async function GET(request: Request) {
       return rateLimitExceededResponse(limited.retryAfterSec);
     }
 
-    return NextResponse.json(createCommentCaptcha());
+    return NextResponse.json(createCommentCaptcha(), {
+      headers: {
+        "Cache-Control": "no-store, no-cache, max-age=0",
+      },
+    });
   } catch (error) {
     return handleApiError(error);
   }

@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { CommentsSection } from "@/components/CommentsSection";
 import { createCommentCaptcha } from "@/lib/commentCaptcha";
 import type { LogComment } from "@/lib/types";
@@ -10,7 +11,7 @@ type LogCommentsProps = {
   captchaEnabled: boolean;
 };
 
-export function LogComments({
+export async function LogComments({
   logEntryId,
   initialComments,
   commentsEnabled,
@@ -19,8 +20,13 @@ export function LogComments({
 }: LogCommentsProps) {
   if (!commentsVisible) return null;
 
+  if (commentsEnabled && captchaEnabled) {
+    await connection();
+  }
+
   return (
     <CommentsSection
+      key={logEntryId}
       apiBasePath={`/api/log/${logEntryId}/comments`}
       initialComments={initialComments}
       mode="public"
