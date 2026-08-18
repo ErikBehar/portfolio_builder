@@ -1,4 +1,5 @@
 import { CommentsSection } from "@/components/CommentsSection";
+import { createCommentCaptcha } from "@/lib/commentCaptcha";
 import type { LogComment } from "@/lib/types";
 
 type ProjectCommentsProps = {
@@ -23,6 +24,7 @@ export function ProjectComments({
       mode="public"
       commentsEnabled={commentsEnabled}
       emptyPublicMessage="No comments yet. Be the first."
+      initialCaptcha={commentsEnabled ? createCommentCaptcha() : undefined}
     />
   );
 }

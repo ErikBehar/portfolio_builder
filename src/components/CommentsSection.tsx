@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { formatCommentDate } from "@/lib/dates";
 import {
   COMMENT_AUTHOR_MAX_LENGTH,
@@ -15,6 +15,7 @@ type CommentsSectionProps = {
   commentsEnabled?: boolean;
   emptyPublicMessage?: string;
   adminDescription?: string;
+  initialCaptcha?: { token: string; question: string };
 };
 
 export function CommentsSection({
@@ -24,6 +25,7 @@ export function CommentsSection({
   commentsEnabled = true,
   emptyPublicMessage = "No comments yet. Be the first.",
   adminDescription = "Edit or remove comments left on this page.",
+  initialCaptcha,
 }: CommentsSectionProps) {
   const [comments, setComments] = useState(initialComments);
   const [author, setAuthor] = useState("");
@@ -34,8 +36,10 @@ export function CommentsSection({
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingId, setLoadingId] = useState<string | null>(null);
-  const [captchaToken, setCaptchaToken] = useState("");
-  const [captchaQuestion, setCaptchaQuestion] = useState("");
+  const [captchaToken, setCaptchaToken] = useState(initialCaptcha?.token ?? "");
+  const [captchaQuestion, setCaptchaQuestion] = useState(
+    initialCaptcha?.question ?? ""
+  );
   const [captchaAnswer, setCaptchaAnswer] = useState("");
   const [captchaLoading, setCaptchaLoading] = useState(false);
 
@@ -43,7 +47,7 @@ export function CommentsSection({
   const headingClass = isAdmin ? "text-lg font-semibold" : "text-xl font-semibold";
   const showPublicForm = !isAdmin && commentsEnabled;
 
-  const refreshCaptcha = useCallback(async () => {
+  async function refreshCaptcha() {
     setCaptchaLoading(true);
     setCaptchaAnswer("");
 
@@ -66,12 +70,7 @@ export function CommentsSection({
     } finally {
       setCaptchaLoading(false);
     }
-  }, []);
-
-  useEffect(() => {
-    if (!showPublicForm) return;
-    void refreshCaptcha();
-  }, [showPublicForm, refreshCaptcha]);
+  }
 
   function startEdit(comment: LogComment) {
     setEditingId(comment.id);

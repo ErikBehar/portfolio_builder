@@ -8,6 +8,8 @@ import { getLogEntryBySlug } from "@/lib/log";
 import { getSiteSettings } from "@/lib/siteSettings";
 import { inlineLinkClassName } from "@/lib/linkStyles";
 
+export const dynamic = "force-dynamic";
+
 type LogEntryPageProps = {
   params: Promise<{ slug: string }>;
 };
