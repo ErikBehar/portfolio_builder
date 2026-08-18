@@ -1,12 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { formatCommentDate } from "@/lib/dates";
 import {
   COMMENT_AUTHOR_MAX_LENGTH,
   COMMENT_CONTENT_MAX_LENGTH,
 } from "@/lib/commentLimits";
 import type { LogComment } from "@/lib/types";
+
+type CaptchaChallenge = {
+  token: string;
+  question: string;
+  expiresAt: number;
+};
 
 type CommentsSectionProps = {
   apiBasePath: string;
@@ -16,8 +22,31 @@ type CommentsSectionProps = {
   captchaEnabled?: boolean;
   emptyPublicMessage?: string;
   adminDescription?: string;
-  initialCaptcha?: { token: string; question: string };
+  initialCaptcha?: { token: string; question: string; expiresAt?: number };
 };
+
+const CAPTCHA_TTL_MS = 10 * 60 * 1000;
+
+function parseCaptchaChallenge(value: unknown): CaptchaChallenge | null {
+  if (!value || typeof value !== "object") return null;
+
+  const record = value as Record<string, unknown>;
+  const token = typeof record.token === "string" ? record.token.trim() : "";
+  const question =
+    typeof record.question === "string" ? record.question.trim() : "";
+  if (!token || !question) return null;
+
+  const expiresAt =
+    typeof record.expiresAt === "number" && Number.isFinite(record.expiresAt)
+      ? record.expiresAt
+      : Date.now() + CAPTCHA_TTL_MS;
+
+  return { token, question, expiresAt };
+}
+
+function isCaptchaExpired(expiresAt: number | null) {
+  return expiresAt == null || Date.now() >= expiresAt;
+}
 
 export function CommentsSection({
   apiBasePath,
@@ -42,37 +71,91 @@ export function CommentsSection({
   const [captchaQuestion, setCaptchaQuestion] = useState(
     initialCaptcha?.question ?? ""
   );
+  const [captchaExpiresAt, setCaptchaExpiresAt] = useState<number | null>(
+    typeof initialCaptcha?.expiresAt === "number"
+      ? initialCaptcha.expiresAt
+      : null
+  );
   const [captchaAnswer, setCaptchaAnswer] = useState("");
   const [captchaLoading, setCaptchaLoading] = useState(false);
+  const captchaRefreshFailedRef = useRef(false);
 
   const isAdmin = mode === "admin";
   const headingClass = isAdmin ? "text-lg font-semibold" : "text-xl font-semibold";
   const showPublicForm = !isAdmin && commentsEnabled;
 
-  async function refreshCaptcha() {
+  function applyCaptcha(challenge: CaptchaChallenge) {
+    captchaRefreshFailedRef.current = false;
+    setCaptchaToken(challenge.token);
+    setCaptchaQuestion(challenge.question);
+    setCaptchaExpiresAt(challenge.expiresAt);
+    setCaptchaAnswer("");
+  }
+
+  const refreshCaptcha = useCallback(async () => {
+    captchaRefreshFailedRef.current = false;
     setCaptchaLoading(true);
     setCaptchaAnswer("");
 
     try {
-      const response = await fetch("/api/comments/captcha");
+      const response = await fetch("/api/comments/captcha", {
+        cache: "no-store",
+      });
       const data = await response.json();
-      if (!response.ok) {
+      const challenge = response.ok ? parseCaptchaChallenge(data) : null;
+      if (!challenge) {
+        captchaRefreshFailedRef.current = true;
         setCaptchaToken("");
         setCaptchaQuestion("");
+        setCaptchaExpiresAt(null);
         setError(data.error ?? "Failed to load verification question");
         return;
       }
 
-      setCaptchaToken(typeof data.token === "string" ? data.token : "");
-      setCaptchaQuestion(typeof data.question === "string" ? data.question : "");
+      applyCaptcha(challenge);
     } catch {
+      captchaRefreshFailedRef.current = true;
       setCaptchaToken("");
       setCaptchaQuestion("");
+      setCaptchaExpiresAt(null);
       setError("Failed to load verification question");
     } finally {
       setCaptchaLoading(false);
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    if (!captchaEnabled || !showPublicForm) return;
+
+    const captchaIsStale = !captchaToken || isCaptchaExpired(captchaExpiresAt);
+    const delay = captchaIsStale
+      ? 0
+      : Math.max(0, (captchaExpiresAt ?? 0) - Date.now());
+
+    const timeoutId = window.setTimeout(() => {
+      if (captchaIsStale && captchaRefreshFailedRef.current) return;
+      void refreshCaptcha();
+    }, delay);
+
+    function onPageShow() {
+      if (captchaRefreshFailedRef.current) return;
+      if (!captchaToken || isCaptchaExpired(captchaExpiresAt)) {
+        void refreshCaptcha();
+      }
+    }
+
+    window.addEventListener("pageshow", onPageShow);
+    return () => {
+      window.clearTimeout(timeoutId);
+      window.removeEventListener("pageshow", onPageShow);
+    };
+  }, [
+    captchaEnabled,
+    captchaExpiresAt,
+    captchaToken,
+    refreshCaptcha,
+    showPublicForm,
+  ]);
 
   function startEdit(comment: LogComment) {
     setEditingId(comment.id);
@@ -105,8 +188,14 @@ export function CommentsSection({
 
     const data = await response.json();
     setLoading(false);
+
     if (captchaEnabled) {
-      void refreshCaptcha();
+      const replacement = parseCaptchaChallenge(data.captcha);
+      if (replacement) {
+        applyCaptcha(replacement);
+      } else {
+        void refreshCaptcha();
+      }
     }
 
     if (!response.ok) {

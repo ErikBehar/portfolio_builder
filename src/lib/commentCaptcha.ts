@@ -1,7 +1,7 @@
 import { randomInt, randomUUID } from "node:crypto";
 import { ApiError } from "@/lib/apiErrors";
 
-const CAPTCHA_TTL_MS = 10 * 60 * 1000;
+export const COMMENT_CAPTCHA_TTL_MS = 10 * 60 * 1000;
 const MAX_CHALLENGES = 5_000;
 
 const NUMBER_WORDS = [
@@ -81,6 +81,7 @@ function parseCaptchaAnswer(value: string): number | null {
 export type CommentCaptchaChallenge = {
   token: string;
   question: string;
+  expiresAt: number;
 };
 
 export function createCommentCaptcha(): CommentCaptchaChallenge {
@@ -98,12 +99,17 @@ export function createCommentCaptcha(): CommentCaptchaChallenge {
     : `What is ${NUMBER_WORDS[minuend]} minus ${NUMBER_WORDS[subtrahend]}?`;
 
   const token = randomUUID();
+  const expiresAt = now + COMMENT_CAPTCHA_TTL_MS;
   challenges.set(token, {
     answer,
-    expiresAt: now + CAPTCHA_TTL_MS,
+    expiresAt,
   });
 
-  return { token, question };
+  return { token, question, expiresAt };
+}
+
+function failCommentCaptcha(message: string): never {
+  throw new ApiError(message, 400, { captcha: createCommentCaptcha() });
 }
 
 export function verifyCommentCaptcha(
@@ -111,10 +117,10 @@ export function verifyCommentCaptcha(
   answer: unknown
 ) {
   if (typeof token !== "string" || !token.trim()) {
-    throw new ApiError("Please complete the verification question", 400);
+    failCommentCaptcha("Please complete the verification question");
   }
   if (typeof answer !== "string" && typeof answer !== "number") {
-    throw new ApiError("Please complete the verification question", 400);
+    failCommentCaptcha("Please complete the verification question");
   }
 
   const now = Date.now();
@@ -124,7 +130,7 @@ export function verifyCommentCaptcha(
   challenges.delete(token);
 
   if (!challenge || now >= challenge.expiresAt) {
-    throw new ApiError("Verification expired. Please try a new question.", 400);
+    failCommentCaptcha("Verification expired. Please try a new question.");
   }
 
   const parsed =
@@ -135,6 +141,6 @@ export function verifyCommentCaptcha(
       : parseCaptchaAnswer(answer);
 
   if (parsed === null || parsed !== challenge.answer) {
-    throw new ApiError("Verification answer is incorrect", 400);
+    failCommentCaptcha("Verification answer is incorrect");
   }
 }
