@@ -36,6 +36,7 @@ model SiteSettings {
   linkPulsingEnabled     Boolean  @default(true)
   commentEmailNotify     Boolean  @default(false)
   commentNotifyEmail     String   @default("")
+  commentCaptchaEnabled  Boolean  @default(true)
   headerLinkIconSize     String   @default("small")
   updatedAt              DateTime @updatedAt
 }

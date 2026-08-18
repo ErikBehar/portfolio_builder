@@ -13,6 +13,7 @@ type CommentsSectionProps = {
   initialComments: LogComment[];
   mode: "public" | "admin";
   commentsEnabled?: boolean;
+  captchaEnabled?: boolean;
   emptyPublicMessage?: string;
   adminDescription?: string;
   initialCaptcha?: { token: string; question: string };
@@ -23,6 +24,7 @@ export function CommentsSection({
   initialComments,
   mode,
   commentsEnabled = true,
+  captchaEnabled = false,
   emptyPublicMessage = "No comments yet. Be the first.",
   adminDescription = "Edit or remove comments left on this page.",
   initialCaptcha,
@@ -97,14 +99,15 @@ export function CommentsSection({
       body: JSON.stringify({
         author,
         content,
-        captchaToken,
-        captchaAnswer,
+        ...(captchaEnabled ? { captchaToken, captchaAnswer } : {}),
       }),
     });
 
     const data = await response.json();
     setLoading(false);
-    void refreshCaptcha();
+    if (captchaEnabled) {
+      void refreshCaptcha();
+    }
 
     if (!response.ok) {
       setError(data.error ?? "Failed to post comment");
@@ -302,51 +305,52 @@ export function CommentsSection({
             </span>
           </label>
 
-          <div className="space-y-2">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <label htmlFor="comment-captcha" className="text-sm text-muted">
-                Verification
-              </label>
-              <button
-                type="button"
-                onClick={() => void refreshCaptcha()}
-                disabled={captchaLoading}
-                className="text-xs text-accent hover:underline disabled:opacity-60"
-              >
-                {captchaLoading ? "Loading..." : "New question"}
-              </button>
+          {captchaEnabled ? (
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <label htmlFor="comment-captcha" className="text-sm text-muted">
+                  Verification
+                </label>
+                <button
+                  type="button"
+                  onClick={() => void refreshCaptcha()}
+                  disabled={captchaLoading}
+                  className="text-xs text-accent hover:underline disabled:opacity-60"
+                >
+                  {captchaLoading ? "Loading..." : "New question"}
+                </button>
+              </div>
+              <p id="comment-captcha-question" className="text-sm font-medium">
+                {captchaQuestion || "Loading verification question..."}
+              </p>
+              <input
+                id="comment-captcha"
+                required
+                value={captchaAnswer}
+                onChange={(event) => setCaptchaAnswer(event.target.value)}
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+                inputMode="numeric"
+                aria-describedby="comment-captcha-question"
+                className="w-full max-w-xs rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                placeholder="Your answer"
+                disabled={captchaLoading || !captchaToken}
+              />
+              <p className="text-xs text-muted">
+                Enter the number to confirm you are not a bot.
+              </p>
             </div>
-            <p id="comment-captcha-question" className="text-sm font-medium">
-              {captchaQuestion || "Loading verification question..."}
-            </p>
-            <input
-              id="comment-captcha"
-              required
-              value={captchaAnswer}
-              onChange={(event) => setCaptchaAnswer(event.target.value)}
-              autoComplete="off"
-              autoCorrect="off"
-              spellCheck={false}
-              inputMode="numeric"
-              aria-describedby="comment-captcha-question"
-              className="w-full max-w-xs rounded-lg border border-border bg-background px-3 py-2 text-sm"
-              placeholder="Your answer"
-              disabled={captchaLoading || !captchaToken}
-            />
-            <p className="text-xs text-muted">
-              Enter the number to confirm you are not a bot.
-            </p>
-          </div>
+          ) : null}
 
           <button
             type="submit"
             disabled={
               loading ||
-              captchaLoading ||
               !author ||
               !content ||
-              !captchaAnswer ||
-              !captchaToken
+              (captchaEnabled &&
+                (captchaLoading || !captchaAnswer || !captchaToken))
             }
             className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground disabled:opacity-60"
           >

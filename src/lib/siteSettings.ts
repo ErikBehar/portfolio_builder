@@ -41,6 +41,7 @@ export const DEFAULT_SITE_SETTINGS = {
   linkPulsingEnabled: true,
   commentEmailNotify: false,
   commentNotifyEmail: "",
+  commentCaptchaEnabled: true,
   headerLinkIconSize: "small" as HeaderLinkIconSize,
 };
 
@@ -62,6 +63,7 @@ export type SiteSettings = {
   linkPulsingEnabled: boolean;
   commentEmailNotify: boolean;
   commentNotifyEmail: string;
+  commentCaptchaEnabled: boolean;
   headerLinkIconSize: HeaderLinkIconSize;
   updatedAt: string;
 };
@@ -81,6 +83,7 @@ export function validateSiteSettingsInput(body: {
   linkPulsingEnabled?: boolean;
   commentEmailNotify?: boolean;
   commentNotifyEmail?: string;
+  commentCaptchaEnabled?: boolean;
   headerLinkIconSize?: string;
 }): string | null {
   if (!body.title?.trim()) return "Site title is required";
@@ -146,6 +149,12 @@ export function validateSiteSettingsInput(body: {
   ) {
     return "Comment notify email must be a string";
   }
+  if (
+    body.commentCaptchaEnabled !== undefined &&
+    typeof body.commentCaptchaEnabled !== "boolean"
+  ) {
+    return "Comment captcha enabled must be true or false";
+  }
   const notifyEmail =
     typeof body.commentNotifyEmail === "string"
       ? body.commentNotifyEmail.trim()
@@ -193,6 +202,7 @@ export async function ensureDefaultSiteSettings() {
       existing.linkPulsingEnabled == null ||
       existing.commentEmailNotify == null ||
       existing.commentNotifyEmail == null ||
+      existing.commentCaptchaEnabled == null ||
       existing.headerLinkIconSize == null;
 
     if (needsBackfill) {
@@ -229,6 +239,9 @@ export async function ensureDefaultSiteSettings() {
           commentNotifyEmail:
             existing.commentNotifyEmail ??
             DEFAULT_SITE_SETTINGS.commentNotifyEmail,
+          commentCaptchaEnabled:
+            existing.commentCaptchaEnabled ??
+            DEFAULT_SITE_SETTINGS.commentCaptchaEnabled,
           headerLinkIconSize:
             existing.headerLinkIconSize ??
             DEFAULT_SITE_SETTINGS.headerLinkIconSize,
@@ -256,6 +269,7 @@ export async function ensureDefaultSiteSettings() {
       linkPulsingEnabled: DEFAULT_SITE_SETTINGS.linkPulsingEnabled,
       commentEmailNotify: DEFAULT_SITE_SETTINGS.commentEmailNotify,
       commentNotifyEmail: DEFAULT_SITE_SETTINGS.commentNotifyEmail,
+      commentCaptchaEnabled: DEFAULT_SITE_SETTINGS.commentCaptchaEnabled,
       headerLinkIconSize: DEFAULT_SITE_SETTINGS.headerLinkIconSize,
     },
   });
@@ -299,6 +313,9 @@ export async function getSiteSettings(): Promise<SiteSettings> {
       settings.commentEmailNotify ?? DEFAULT_SITE_SETTINGS.commentEmailNotify,
     commentNotifyEmail:
       settings.commentNotifyEmail ?? DEFAULT_SITE_SETTINGS.commentNotifyEmail,
+    commentCaptchaEnabled:
+      settings.commentCaptchaEnabled ??
+      DEFAULT_SITE_SETTINGS.commentCaptchaEnabled,
     headerLinkIconSize: normalizeHeaderLinkIconSize(
       settings.headerLinkIconSize ?? DEFAULT_SITE_SETTINGS.headerLinkIconSize
     ),
@@ -321,6 +338,7 @@ export async function upsertSiteSettings(body: {
   linkPulsingEnabled?: boolean;
   commentEmailNotify?: boolean;
   commentNotifyEmail?: string;
+  commentCaptchaEnabled?: boolean;
   headerLinkIconSize?: string;
 }): Promise<SiteSettings> {
   const validationError = validateSiteSettingsInput(body);
@@ -354,6 +372,7 @@ export async function upsertSiteSettings(body: {
     typeof body.commentNotifyEmail === "string"
       ? body.commentNotifyEmail.trim()
       : "";
+  const commentCaptchaEnabled = body.commentCaptchaEnabled ?? true;
   const headerLinkIconSize = normalizeHeaderLinkIconSize(
     body.headerLinkIconSize ?? DEFAULT_SITE_SETTINGS.headerLinkIconSize
   );
@@ -377,6 +396,7 @@ export async function upsertSiteSettings(body: {
       linkPulsingEnabled: body.linkPulsingEnabled ?? true,
       commentEmailNotify,
       commentNotifyEmail,
+      commentCaptchaEnabled,
       headerLinkIconSize,
     },
     update: {
@@ -395,6 +415,7 @@ export async function upsertSiteSettings(body: {
       linkPulsingEnabled: body.linkPulsingEnabled ?? true,
       commentEmailNotify,
       commentNotifyEmail,
+      commentCaptchaEnabled,
       ...(body.headerLinkIconSize !== undefined ? { headerLinkIconSize } : {}),
     },
   });

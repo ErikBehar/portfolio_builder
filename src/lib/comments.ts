@@ -65,6 +65,8 @@ async function assertCommentsEnabled(parentType: CommentParentType) {
   if (parentType === "project" && !siteSettings.projectCommentsEnabled) {
     throw new ApiError("Comments are currently disabled", 403);
   }
+
+  return siteSettings;
 }
 
 export async function getComments(
@@ -102,8 +104,10 @@ export async function createComment(
   if (parentType === "log") {
     const entry = await prisma.logEntry.findUnique({ where: { id: parentId } });
     if (!entry) throw new ApiError("Log entry not found", 404);
-    await assertCommentsEnabled("log");
-    verifyCommentCaptcha(body.captchaToken, body.captchaAnswer);
+    const siteSettings = await assertCommentsEnabled("log");
+    if (siteSettings.commentCaptchaEnabled) {
+      verifyCommentCaptcha(body.captchaToken, body.captchaAnswer);
+    }
 
     const comment = await prisma.comment.create({
       data: {
@@ -127,8 +131,10 @@ export async function createComment(
 
   const project = await prisma.project.findUnique({ where: { id: parentId } });
   if (!project) throw new ApiError("Project not found", 404);
-  await assertCommentsEnabled("project");
-  verifyCommentCaptcha(body.captchaToken, body.captchaAnswer);
+  const siteSettings = await assertCommentsEnabled("project");
+  if (siteSettings.commentCaptchaEnabled) {
+    verifyCommentCaptcha(body.captchaToken, body.captchaAnswer);
+  }
 
   const comment = await prisma.projectComment.create({
     data: {

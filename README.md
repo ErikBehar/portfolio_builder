@@ -24,7 +24,7 @@ A configurable portfolio site with section-based project navigation, a project t
 
 Filter projects by label via URL: `?labels=show,featured` or `?labels=none`.
 
-**Comments** — visitors can post comments on log entries and project pages using a name and message. A simple math question must be answered before a comment is posted. Each comment type can be toggled independently in site settings. Existing comments remain visible when posting is disabled.
+**Comments** — visitors can post comments on log entries and project pages using a name and message. Each comment type can be toggled independently in site settings. A math captcha can be required before posting (on by default). Existing comments remain visible when posting is disabled.
 
 **Rich text** — project descriptions support markdown links `[text](url)` and auto-linked URLs.
 
@@ -40,7 +40,7 @@ Access via the **gear icon** in the header, or navigate directly to `/admin` (re
 | Projects | `/admin/{section}` | Create, edit, delete projects per section; media, labels, links |
 | Labels | `/admin/labels` | Manage shared label pool (`show` label cannot be deleted) |
 | Header links | `/admin/header-links` | Nav buttons in the header (email, CV, social, etc.) |
-| Site settings | `/admin/site-settings` | Site title, description, footer, colors, comment toggles |
+| Site settings | `/admin/site-settings` | Site title, description, footer, colors, comment toggles, captcha |
 
 ## Stack
 
@@ -116,7 +116,7 @@ Admin UI forms call the API routes; public pages read data directly via lib func
 | `labels.ts` | Label management, system labels, usage counts |
 | `comments.ts` | Shared comment CRUD for log entries and projects |
 | `commentCaptcha.ts` | Math captcha challenges and one-time verification for public comment posts |
-| `siteSettings.ts` | Site branding, comment toggles, upsert |
+| `siteSettings.ts` | Site branding, comment toggles, captcha, upsert |
 | `headerLinks.ts` | Header navigation links |
 | `uploads.ts` | Upload storage, path safety, file cleanup |
 | `media.ts` / `mediaSync.ts` | Cover image helpers, media replace-on-save |

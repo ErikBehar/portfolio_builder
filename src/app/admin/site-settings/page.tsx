@@ -20,7 +20,7 @@ export default async function AdminSiteSettingsPage() {
       </header>
 
       <AdminSiteSettingsForm
-        key={`${settings.updatedAt}-${settings.footerText}-${settings.commentsEnabled}-${settings.projectCommentsEnabled}-${settings.commentsVisible}-${settings.projectCommentsVisible}-${settings.commentEmailNotify}-${settings.commentNotifyEmail}-${settings.homeHeaderColor}-${settings.siteTitleColor}`}
+        key={`${settings.updatedAt}-${settings.footerText}-${settings.commentsEnabled}-${settings.projectCommentsEnabled}-${settings.commentsVisible}-${settings.projectCommentsVisible}-${settings.commentCaptchaEnabled}-${settings.commentEmailNotify}-${settings.commentNotifyEmail}-${settings.homeHeaderColor}-${settings.siteTitleColor}`}
         settings={settings}
       />
 
