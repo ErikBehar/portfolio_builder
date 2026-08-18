@@ -19,6 +19,14 @@ function formatWhen(iso: string): string {
   });
 }
 
+function commentApiPath(item: AdminCommentItem): string {
+  if (item.parentType === "log") {
+    return `/api/log/${item.parentId}/comments/${item.id}`;
+  }
+
+  return `/api/projects/${item.parentId}/comments/${item.id}`;
+}
+
 export function AdminCommentsInbox({
   comments,
   unreadCount,
@@ -26,6 +34,7 @@ export function AdminCommentsInbox({
 }: AdminCommentsInboxProps) {
   const router = useRouter();
   const [pendingId, setPendingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [markingAll, setMarkingAll] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
 
@@ -67,6 +76,27 @@ export function AdminCommentsInbox({
     if (!response.ok) {
       const data = await response.json().catch(() => null);
       setStatus(data?.error ?? "Failed to mark comments as seen");
+      return;
+    }
+
+    router.refresh();
+  }
+
+  async function deleteComment(item: AdminCommentItem) {
+    if (!window.confirm("Delete this comment?")) return;
+
+    setDeletingId(item.id);
+    setStatus(null);
+
+    const response = await fetch(commentApiPath(item), {
+      method: "DELETE",
+    });
+
+    setDeletingId(null);
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => null);
+      setStatus(data?.error ?? "Failed to delete comment");
       return;
     }
 
@@ -122,6 +152,7 @@ export function AdminCommentsInbox({
           {comments.map((comment) => {
             const isUnread = !comment.seenAt;
             const isPending = pendingId === comment.id;
+            const isDeleting = deletingId === comment.id;
 
             return (
               <li
@@ -169,12 +200,20 @@ export function AdminCommentsInbox({
                       <button
                         type="button"
                         onClick={() => markSeen(comment)}
-                        disabled={isPending}
+                        disabled={isPending || isDeleting}
                         className="rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-accent-foreground disabled:opacity-60"
                       >
                         {isPending ? "Saving..." : "Mark seen"}
                       </button>
                     )}
+                    <button
+                      type="button"
+                      onClick={() => deleteComment(comment)}
+                      disabled={isPending || isDeleting}
+                      className="rounded-lg border border-border px-3 py-1.5 text-sm text-red-400 transition-colors hover:border-red-400 hover:text-red-300 disabled:opacity-60"
+                    >
+                      {isDeleting ? "Deleting..." : "Delete"}
+                    </button>
                   </div>
                 </div>
 

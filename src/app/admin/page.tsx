@@ -41,7 +41,8 @@ export default async function AdminHomePage() {
             )}
           </div>
           <p className="mt-2 text-sm text-muted">
-            Review comments on log entries and projects, and mark them as seen.
+            Review comments on log entries and projects, mark them as seen, or
+            delete them.
           </p>
         </Link>
 
