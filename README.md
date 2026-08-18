@@ -24,7 +24,7 @@ A configurable portfolio site with section-based project navigation, a project t
 
 Filter projects by label via URL: `?labels=show,featured` or `?labels=none`.
 
-**Comments** — visitors can post comments on log entries and project pages using a name and message. Each type can be toggled independently in site settings. Existing comments remain visible when posting is disabled.
+**Comments** — visitors can post comments on log entries and project pages using a name and message. A simple math question must be answered before a comment is posted. Each comment type can be toggled independently in site settings. Existing comments remain visible when posting is disabled.
 
 **Rich text** — project descriptions support markdown links `[text](url)` and auto-linked URLs.
 
@@ -115,6 +115,7 @@ Admin UI forms call the API routes; public pages read data directly via lib func
 | `sections.ts` | Section queries and CRUD |
 | `labels.ts` | Label management, system labels, usage counts |
 | `comments.ts` | Shared comment CRUD for log entries and projects |
+| `commentCaptcha.ts` | Math captcha challenges and one-time verification for public comment posts |
 | `siteSettings.ts` | Site branding, comment toggles, upsert |
 | `headerLinks.ts` | Header navigation links |
 | `uploads.ts` | Upload storage, path safety, file cleanup |

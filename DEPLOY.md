@@ -196,7 +196,7 @@ Before going live:
 |-------|------------|
 | Admin pages (`/admin/*`) | `middleware.ts` — redirects to login if session cookie is invalid |
 | Admin API mutations | `requireAdmin()` in each route — checks the same session cookie |
-| Public comment POST | Allowed without login; gated by site settings (`commentsEnabled`, `projectCommentsEnabled`) |
+| Public comment POST | Allowed without login; gated by site settings (`commentsEnabled`, `projectCommentsEnabled`) and a math captcha |
 
 **Admin-only mutations** (require a valid admin session):
 
@@ -206,11 +206,12 @@ Before going live:
 
 **Intentionally public** (no admin session required):
 
-- `POST /api/log/[id]/comments` — visitor comments on log entries (when enabled)
-- `POST /api/projects/[id]/comments` — visitor comments on projects (when enabled)
+- `GET /api/comments/captcha` — issues a one-time math question for the comment form
+- `POST /api/log/[id]/comments` — visitor comments on log entries (when enabled; requires captcha)
+- `POST /api/projects/[id]/comments` — visitor comments on projects (when enabled; requires captcha)
 - `POST /api/admin/auth` — login endpoint
 
-`GET` API routes exist for some resources but are not used by the public UI (pages read via server components and `src/lib/*`). They return the same normalized shapes as the lib layer.
+`GET` API routes exist for some resources. The public comment form uses `GET /api/comments/captcha`; other GET APIs are not used by the public UI (pages read via server components and `src/lib/*`). They return the same normalized shapes as the lib layer.
 
 Set `ADMIN_SECRET` to a long random value before exposing the site to the internet.
 

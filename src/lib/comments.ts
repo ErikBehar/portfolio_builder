@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { ApiError } from "@/lib/apiErrors";
+import { verifyCommentCaptcha } from "@/lib/commentCaptcha";
 import {
   COMMENT_AUTHOR_MAX_LENGTH,
   COMMENT_CONTENT_MAX_LENGTH,
@@ -88,7 +89,12 @@ export async function getComments(
 export async function createComment(
   parentType: CommentParentType,
   parentId: string,
-  body: { author?: string; content?: string },
+  body: {
+    author?: string;
+    content?: string;
+    captchaToken?: unknown;
+    captchaAnswer?: unknown;
+  },
   options?: { requestOrigin?: string | null }
 ): Promise<LogComment> {
   const input = validateCommentInput(body);
@@ -97,6 +103,7 @@ export async function createComment(
     const entry = await prisma.logEntry.findUnique({ where: { id: parentId } });
     if (!entry) throw new ApiError("Log entry not found", 404);
     await assertCommentsEnabled("log");
+    verifyCommentCaptcha(body.captchaToken, body.captchaAnswer);
 
     const comment = await prisma.comment.create({
       data: {
@@ -121,6 +128,7 @@ export async function createComment(
   const project = await prisma.project.findUnique({ where: { id: parentId } });
   if (!project) throw new ApiError("Project not found", 404);
   await assertCommentsEnabled("project");
+  verifyCommentCaptcha(body.captchaToken, body.captchaAnswer);
 
   const comment = await prisma.projectComment.create({
     data: {
