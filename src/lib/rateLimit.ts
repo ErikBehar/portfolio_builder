@@ -85,3 +85,6 @@ export const LOGIN_RATE_LIMIT = { limit: 5, windowMs: 15 * 60 * 1000 };
 
 /** Public comments: 5 posts per 10 minutes per IP. */
 export const COMMENT_RATE_LIMIT = { limit: 5, windowMs: 10 * 60 * 1000 };
+
+/** Comment captcha issuance: 30 per minute per IP. */
+export const COMMENT_CAPTCHA_RATE_LIMIT = { limit: 30, windowMs: 60 * 1000 };

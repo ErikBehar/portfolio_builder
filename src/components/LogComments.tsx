@@ -1,4 +1,5 @@
 import { CommentsSection } from "@/components/CommentsSection";
+import { createCommentCaptcha } from "@/lib/commentCaptcha";
 import type { LogComment } from "@/lib/types";
 
 type LogCommentsProps = {
@@ -6,6 +7,7 @@ type LogCommentsProps = {
   initialComments: LogComment[];
   commentsEnabled: boolean;
   commentsVisible: boolean;
+  captchaEnabled: boolean;
 };
 
 export function LogComments({
@@ -13,6 +15,7 @@ export function LogComments({
   initialComments,
   commentsEnabled,
   commentsVisible,
+  captchaEnabled,
 }: LogCommentsProps) {
   if (!commentsVisible) return null;
 
@@ -22,7 +25,11 @@ export function LogComments({
       initialComments={initialComments}
       mode="public"
       commentsEnabled={commentsEnabled}
+      captchaEnabled={captchaEnabled}
       emptyPublicMessage="No comments yet. Be the first."
+      initialCaptcha={
+        commentsEnabled && captchaEnabled ? createCommentCaptcha() : undefined
+      }
     />
   );
 }

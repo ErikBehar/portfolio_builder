@@ -61,6 +61,9 @@ export function AdminSiteSettingsForm({ settings }: AdminSiteSettingsFormProps) 
   const [commentNotifyEmail, setCommentNotifyEmail] = useState(
     settings.commentNotifyEmail ?? ""
   );
+  const [commentCaptchaEnabled, setCommentCaptchaEnabled] = useState(
+    settings.commentCaptchaEnabled ?? true
+  );
   const [status, setStatus] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -79,6 +82,7 @@ export function AdminSiteSettingsForm({ settings }: AdminSiteSettingsFormProps) 
     setLinkPulsingEnabled(settings.linkPulsingEnabled ?? true);
     setCommentEmailNotify(settings.commentEmailNotify ?? false);
     setCommentNotifyEmail(settings.commentNotifyEmail ?? "");
+    setCommentCaptchaEnabled(settings.commentCaptchaEnabled ?? true);
   }, [settings]);
 
   function moveSection(index: number, direction: -1 | 1) {
@@ -132,6 +136,7 @@ export function AdminSiteSettingsForm({ settings }: AdminSiteSettingsFormProps) 
         linkPulsingEnabled,
         commentEmailNotify,
         commentNotifyEmail,
+        commentCaptchaEnabled,
       }),
     });
 
@@ -157,6 +162,7 @@ export function AdminSiteSettingsForm({ settings }: AdminSiteSettingsFormProps) 
     setLinkPulsingEnabled(data.linkPulsingEnabled ?? true);
     setCommentEmailNotify(data.commentEmailNotify ?? false);
     setCommentNotifyEmail(data.commentNotifyEmail ?? "");
+    setCommentCaptchaEnabled(data.commentCaptchaEnabled ?? true);
     setStatus("Saved.");
     setAdminFlash("Site settings saved.");
     router.refresh();
@@ -449,6 +455,24 @@ export function AdminSiteSettingsForm({ settings }: AdminSiteSettingsFormProps) 
           <span className="block text-sm text-muted">
             When disabled, visitors can still read existing comments (if shown)
             but cannot post new ones on project pages.
+          </span>
+        </span>
+      </label>
+
+      <label className="flex items-start gap-3 rounded-xl border border-border bg-surface px-4 py-3">
+        <input
+          type="checkbox"
+          checked={commentCaptchaEnabled}
+          onChange={(event) => setCommentCaptchaEnabled(event.target.checked)}
+          className="mt-1"
+        />
+        <span className="space-y-1">
+          <span className="block text-sm font-medium">
+            Require captcha for new comments
+          </span>
+          <span className="block text-sm text-muted">
+            When enabled, visitors must answer a simple math question before
+            posting a log or project comment.
           </span>
         </span>
       </label>

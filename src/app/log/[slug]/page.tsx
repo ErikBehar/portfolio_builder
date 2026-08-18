@@ -8,6 +8,8 @@ import { getLogEntryBySlug } from "@/lib/log";
 import { getSiteSettings } from "@/lib/siteSettings";
 import { inlineLinkClassName } from "@/lib/linkStyles";
 
+export const dynamic = "force-dynamic";
+
 type LogEntryPageProps = {
   params: Promise<{ slug: string }>;
 };
@@ -54,6 +56,7 @@ export default async function LogEntryPage({ params }: LogEntryPageProps) {
         initialComments={entry.comments ?? []}
         commentsEnabled={siteSettings.commentsEnabled}
         commentsVisible={siteSettings.commentsVisible}
+        captchaEnabled={siteSettings.commentCaptchaEnabled}
       />
 
       <p className="mt-10 text-sm text-muted">

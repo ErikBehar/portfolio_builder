@@ -13,8 +13,10 @@ type CommentsSectionProps = {
   initialComments: LogComment[];
   mode: "public" | "admin";
   commentsEnabled?: boolean;
+  captchaEnabled?: boolean;
   emptyPublicMessage?: string;
   adminDescription?: string;
+  initialCaptcha?: { token: string; question: string };
 };
 
 export function CommentsSection({
@@ -22,8 +24,10 @@ export function CommentsSection({
   initialComments,
   mode,
   commentsEnabled = true,
+  captchaEnabled = false,
   emptyPublicMessage = "No comments yet. Be the first.",
   adminDescription = "Edit or remove comments left on this page.",
+  initialCaptcha,
 }: CommentsSectionProps) {
   const [comments, setComments] = useState(initialComments);
   const [author, setAuthor] = useState("");
@@ -34,9 +38,41 @@ export function CommentsSection({
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState(initialCaptcha?.token ?? "");
+  const [captchaQuestion, setCaptchaQuestion] = useState(
+    initialCaptcha?.question ?? ""
+  );
+  const [captchaAnswer, setCaptchaAnswer] = useState("");
+  const [captchaLoading, setCaptchaLoading] = useState(false);
 
   const isAdmin = mode === "admin";
   const headingClass = isAdmin ? "text-lg font-semibold" : "text-xl font-semibold";
+  const showPublicForm = !isAdmin && commentsEnabled;
+
+  async function refreshCaptcha() {
+    setCaptchaLoading(true);
+    setCaptchaAnswer("");
+
+    try {
+      const response = await fetch("/api/comments/captcha");
+      const data = await response.json();
+      if (!response.ok) {
+        setCaptchaToken("");
+        setCaptchaQuestion("");
+        setError(data.error ?? "Failed to load verification question");
+        return;
+      }
+
+      setCaptchaToken(typeof data.token === "string" ? data.token : "");
+      setCaptchaQuestion(typeof data.question === "string" ? data.question : "");
+    } catch {
+      setCaptchaToken("");
+      setCaptchaQuestion("");
+      setError("Failed to load verification question");
+    } finally {
+      setCaptchaLoading(false);
+    }
+  }
 
   function startEdit(comment: LogComment) {
     setEditingId(comment.id);
@@ -60,11 +96,18 @@ export function CommentsSection({
     const response = await fetch(apiBasePath, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ author, content }),
+      body: JSON.stringify({
+        author,
+        content,
+        ...(captchaEnabled ? { captchaToken, captchaAnswer } : {}),
+      }),
     });
 
     const data = await response.json();
     setLoading(false);
+    if (captchaEnabled) {
+      void refreshCaptcha();
+    }
 
     if (!response.ok) {
       setError(data.error ?? "Failed to post comment");
@@ -225,7 +268,7 @@ export function CommentsSection({
         </ul>
       )}
 
-      {!isAdmin && commentsEnabled ? (
+      {showPublicForm ? (
         <form
           onSubmit={handleSubmit}
           className="mt-8 space-y-4 rounded-xl border border-border bg-surface p-5"
@@ -262,9 +305,53 @@ export function CommentsSection({
             </span>
           </label>
 
+          {captchaEnabled ? (
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <label htmlFor="comment-captcha" className="text-sm text-muted">
+                  Verification
+                </label>
+                <button
+                  type="button"
+                  onClick={() => void refreshCaptcha()}
+                  disabled={captchaLoading}
+                  className="text-xs text-accent hover:underline disabled:opacity-60"
+                >
+                  {captchaLoading ? "Loading..." : "New question"}
+                </button>
+              </div>
+              <p id="comment-captcha-question" className="text-sm font-medium">
+                {captchaQuestion || "Loading verification question..."}
+              </p>
+              <input
+                id="comment-captcha"
+                required
+                value={captchaAnswer}
+                onChange={(event) => setCaptchaAnswer(event.target.value)}
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+                inputMode="numeric"
+                aria-describedby="comment-captcha-question"
+                className="w-full max-w-xs rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                placeholder="Your answer"
+                disabled={captchaLoading || !captchaToken}
+              />
+              <p className="text-xs text-muted">
+                Enter the number to confirm you are not a bot.
+              </p>
+            </div>
+          ) : null}
+
           <button
             type="submit"
-            disabled={loading || !author || !content}
+            disabled={
+              loading ||
+              !author ||
+              !content ||
+              (captchaEnabled &&
+                (captchaLoading || !captchaAnswer || !captchaToken))
+            }
             className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground disabled:opacity-60"
           >
             {loading ? "Posting..." : "Post comment"}
