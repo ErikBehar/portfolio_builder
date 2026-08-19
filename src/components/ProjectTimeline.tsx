@@ -40,10 +40,11 @@ type TimelineRange = {
 };
 
 const PADDING_MONTHS = 2;
-const LANE_HEIGHT = 52;
-const AXIS_HEIGHT = 72;
 const MARKER_SIZE = 14;
-const MIN_MARKER_GAP = 28;
+const MARKER_GAP = 6;
+const MIN_MARKER_GAP = MARKER_SIZE + MARKER_GAP;
+const LANE_HEIGHT = Math.ceil(MARKER_SIZE * 1.25) + MARKER_GAP;
+const AXIS_HEIGHT = 72;
 const TIMELINE_SIDE_PADDING = 48;
 const MIN_PX_PER_MONTH_FOR_MONTH_LABELS = 40;
 const ZOOM_STEP = 1.25;
@@ -109,6 +110,7 @@ function assignLanes(items: { entry: TimelineEntry; x: number }[]): PositionedEn
   return sorted.map((item) => {
     let lane = 0;
 
+    // If this bubble would collide with one already in the lane, stack it underneath.
     while (laneEnds[lane] !== undefined && item.x - laneEnds[lane] < MIN_MARKER_GAP) {
       lane += 1;
     }
@@ -292,7 +294,7 @@ export function ProjectTimeline({
       maxLane,
       totalWidth,
       ticks,
-      contentHeight: AXIS_HEIGHT + (maxLane + 1) * LANE_HEIGHT + 48,
+      contentHeight: AXIS_HEIGHT + (maxLane + 1) * LANE_HEIGHT + 32,
     };
   }, [containerWidth, filteredEntries, pxPerMonth, timelineRange]);
 
@@ -498,17 +500,23 @@ export function ProjectTimeline({
             </div>
 
             {layout.positioned.map((item) => {
-              const top = AXIS_HEIGHT + 24 + item.lane * LANE_HEIGHT;
+              const top = AXIS_HEIGHT + 16 + item.lane * LANE_HEIGHT;
               const isHovered = hoveredId === item.project.id;
 
               return (
                 <div
                   key={item.project.id}
                   className="absolute"
-                  style={{ left: item.x, top, transform: "translateX(-50%)" }}
+                  style={{
+                    left: item.x,
+                    top,
+                    transform: "translateX(-50%)",
+                    zIndex: isHovered ? 10 : 1,
+                  }}
                 >
                   <Link
                     href={`/${item.project.section}/${item.project.slug}`}
+                    aria-label={item.project.title}
                     className="group block"
                     onMouseEnter={() => setHoveredId(item.project.id)}
                     onMouseLeave={() => setHoveredId(null)}
@@ -525,11 +533,7 @@ export function ProjectTimeline({
                         backgroundColor: item.sectionColor,
                         boxShadow: `0 4px 14px ${item.sectionColor}66`,
                       }}
-                      aria-label={item.project.title}
                     />
-                    <span className="pointer-events-none absolute left-1/2 top-5 w-max max-w-40 -translate-x-1/2 truncate text-center text-xs text-muted group-hover:text-foreground">
-                      {item.project.title}
-                    </span>
                   </Link>
                 </div>
               );
