@@ -58,7 +58,7 @@ export function AdminProjectList({ section, projects }: AdminProjectListProps) {
           key={project.id}
           className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-border bg-surface px-5 py-4"
         >
-          <div>
+          <div className="min-w-0 flex-1">
             <h2 className="font-medium">{project.title}</h2>
             <p className="text-sm text-muted">
               {project.media.length} media item
@@ -68,6 +68,18 @@ export function AdminProjectList({ section, projects }: AdminProjectListProps) {
               {project.links.length === 1 ? "" : "s"}
               {project.category ? ` · ${project.category.replace(/-/g, " ")}` : ""}
             </p>
+            {project.labels.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {project.labels.map((label) => (
+                  <span
+                    key={label.id}
+                    className="rounded-full border border-border px-2.5 py-0.5 text-xs text-muted"
+                  >
+                    {label.name}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="flex gap-3">
