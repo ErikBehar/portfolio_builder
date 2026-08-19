@@ -78,8 +78,14 @@ function isTapPointer(pointerType: string | undefined): boolean {
   return pointerType === "touch" || pointerType === "pen";
 }
 
+const PREVIEW_CARD_SURFACE_CLASS_NAME =
+  "w-64 max-w-[calc(100vw-2rem)] rounded-xl border border-border bg-surface-elevated p-3 text-center shadow-xl shadow-black/30";
+
 const PREVIEW_CARD_CLASS_NAME =
-  "absolute bottom-full left-1/2 z-20 mb-3 w-64 -translate-x-1/2 rounded-xl border border-border bg-surface-elevated p-3 text-center shadow-xl shadow-black/30";
+  `absolute bottom-full left-1/2 z-20 mb-3 -translate-x-1/2 ${PREVIEW_CARD_SURFACE_CLASS_NAME}`;
+
+const TAP_PREVIEW_CARD_CLASS_NAME =
+  `fixed left-1/2 top-1/2 z-[60] -translate-x-1/2 -translate-y-1/2 ${PREVIEW_CARD_SURFACE_CLASS_NAME}`;
 
 function TimelinePreviewCard({
   item,
@@ -584,7 +590,7 @@ export function ProjectTimeline({
                   <Link
                     ref={overlayRef}
                     href={projectHref(hovered.project)}
-                    className={`${PREVIEW_CARD_CLASS_NAME} cursor-pointer`}
+                    className={`${TAP_PREVIEW_CARD_CLASS_NAME} cursor-pointer`}
                     aria-label={`Open ${hovered.project.title}`}
                   >
                     <TimelinePreviewCard
