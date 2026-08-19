@@ -1,7 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import { formatLogDate } from "@/lib/dates";
 import { usePersistedLabelFilters } from "@/hooks/usePersistedLabelFilters";
 import { projectMatchesLabels } from "@/lib/labelFilter";
@@ -175,6 +181,31 @@ function dateToX(date: Date, start: Date, pxPerMonth: number): number {
   return (months + dayFraction) * pxPerMonth;
 }
 
+function xToDate(x: number, start: Date, pxPerMonth: number): Date {
+  const monthFloat = Math.max(0, (x - TIMELINE_SIDE_PADDING) / pxPerMonth);
+  const wholeMonths = Math.floor(monthFloat);
+  const dayFraction = monthFloat - wholeMonths;
+  const date = addUtcMonths(start, wholeMonths);
+  const daysInMonth = new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0)
+  ).getUTCDate();
+  const day = Math.min(
+    daysInMonth,
+    Math.max(1, Math.round(dayFraction * 31) + 1)
+  );
+  date.setUTCDate(day);
+  return date;
+}
+
+function formatScrubDate(date: Date): string {
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
 function assignLanes(items: { entry: TimelineEntry; x: number }[]): PositionedEntry[] {
   const sorted = [...items].sort((a, b) => a.x - b.x);
   const laneEnds: number[] = [];
@@ -257,6 +288,7 @@ export function ProjectTimeline({
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [canHover, setCanHover] = useState(true);
   const [tapPreview, setTapPreview] = useState(false);
+  const [scrubX, setScrubX] = useState<number | null>(null);
 
   const { selectedSlugs, toggleLabel } = usePersistedLabelFilters({
     scope: "timeline",
@@ -396,6 +428,7 @@ export function ProjectTimeline({
       positioned,
       maxLane,
       totalWidth,
+      contentWidth,
       ticks,
       contentHeight: AXIS_HEIGHT + (maxLane + 1) * LANE_HEIGHT + 32,
     };
@@ -418,6 +451,13 @@ export function ProjectTimeline({
   const hovered = layout?.positioned.find((item) => item.project.id === hoveredId);
   const hoveredCover = hovered ? getProjectCoverMedia(hovered.project) : undefined;
   const overlayIsLink = tapPreview && Boolean(hovered);
+  const playheadX = scrubX ?? hovered?.x ?? null;
+  const playheadDate =
+    scrubX !== null && timelineRange && pxPerMonth !== null
+      ? xToDate(scrubX, timelineRange.start, pxPerMonth)
+      : hovered
+        ? projectDate(hovered.project)
+        : null;
 
   function showHoverPreview(projectId: string) {
     if (!canHover) return;
@@ -433,6 +473,16 @@ export function ProjectTimeline({
   function showTapPreview(projectId: string) {
     setHoveredId(projectId);
     setTapPreview(true);
+  }
+
+  function updateScrub(event: ReactPointerEvent<HTMLDivElement>) {
+    if (!layout) return;
+
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const minX = TIMELINE_SIDE_PADDING;
+    const maxX = layout.contentWidth - TIMELINE_SIDE_PADDING;
+    setScrubX(Math.min(maxX, Math.max(minX, x)));
   }
 
   return (
@@ -487,7 +537,9 @@ export function ProjectTimeline({
         <p className="text-sm text-muted">
           {filteredEntries.length} project{filteredEntries.length === 1 ? "" : "s"} ·
           {zoomMultiplier === 1 ? " fit to view" : " zoom adjusted"} ·{" "}
-          {canHover ? "hover for details" : "tap a bubble, then the card to open"}
+          {canHover
+            ? "hover for dates and details"
+            : "tap a bubble, then the card to open"}
         </p>
 
         <div className="flex items-center gap-2">
@@ -562,6 +614,10 @@ export function ProjectTimeline({
           <div
             className="relative"
             style={{ width: layout.totalWidth, height: layout.contentHeight }}
+            onPointerEnter={updateScrub}
+            onPointerMove={updateScrub}
+            onPointerLeave={() => setScrubX(null)}
+            onPointerCancel={() => setScrubX(null)}
           >
             <div
               className="absolute inset-x-0 top-0 border-b border-border bg-surface-elevated"
@@ -596,6 +652,20 @@ export function ProjectTimeline({
                   )}
                 </div>
               ))}
+
+              {playheadX !== null && playheadDate && (
+                <div
+                  className="pointer-events-none absolute bottom-0 z-20 flex flex-col items-center"
+                  style={{ left: playheadX, transform: "translateX(-50%)" }}
+                  aria-hidden
+                >
+                  <span className="mb-1 whitespace-nowrap rounded-md bg-background px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-foreground shadow-sm ring-1 ring-accent/50">
+                    {formatScrubDate(playheadDate)}
+                  </span>
+                  <div className="h-7 w-0.5 rounded-full bg-accent" />
+                  <div className="h-1.5 w-1.5 rounded-full bg-accent" />
+                </div>
+              )}
             </div>
 
             {layout.positioned.map((item) => {
