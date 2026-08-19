@@ -331,10 +331,6 @@ export function ProjectTimeline({
     };
   }, [containerWidth, filteredEntries, pxPerMonth, timelineRange]);
 
-  useEffect(() => {
-    setScrubX(null);
-  }, [zoomMultiplier, timelineRangeKey]);
-
   function zoomOut() {
     setZoomMultiplier((current) =>
       Math.max(MIN_ZOOM_MULTIPLIER, Number((current / ZOOM_STEP).toFixed(3)))
