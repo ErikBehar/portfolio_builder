@@ -6,7 +6,7 @@ import {
   useMemo,
   useRef,
   useState,
-  type PointerEvent,
+  type PointerEvent as ReactPointerEvent,
 } from "react";
 import { formatLogDate } from "@/lib/dates";
 import { usePersistedLabelFilters } from "@/hooks/usePersistedLabelFilters";
@@ -68,6 +68,78 @@ function getLabelFontSize(count: number, maxCount: number): string {
 
 function projectDate(project: ProjectWithMedia): Date {
   return new Date(project.createdAt);
+}
+
+function projectHref(project: ProjectWithMedia): string {
+  return `/${project.section}/${project.slug}`;
+}
+
+function isTapPointer(pointerType: string | undefined): boolean {
+  return pointerType === "touch" || pointerType === "pen";
+}
+
+const PREVIEW_CARD_CLASS_NAME =
+  "absolute bottom-full left-1/2 z-20 mb-3 w-64 -translate-x-1/2 rounded-xl border border-border bg-surface-elevated p-3 text-center shadow-xl shadow-black/30";
+
+function TimelinePreviewCard({
+  item,
+  cover,
+  showTapHint,
+}: {
+  item: PositionedEntry;
+  cover?: ReturnType<typeof getProjectCoverMedia>;
+  showTapHint: boolean;
+}) {
+  return (
+    <>
+      {cover?.type === "image" ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={cover.url}
+          alt=""
+          className="mx-auto mb-3 h-20 w-full max-w-[10rem] rounded-md bg-surface object-contain"
+        />
+      ) : null}
+
+      <p
+        className="text-[10px] font-medium uppercase tracking-[0.15em]"
+        style={{ color: item.sectionColor }}
+      >
+        {item.sectionTitle}
+      </p>
+      <h3 className="mt-1 text-sm font-medium">{item.project.title}</h3>
+      <p className="mt-1 text-xs text-muted">
+        {formatLogDate(item.project.createdAt)}
+      </p>
+
+      {item.project.description && (
+        <RichText
+          content={item.project.description}
+          className="mt-2 line-clamp-2 text-xs text-muted"
+          interactive={false}
+        />
+      )}
+
+      {item.project.labels.length > 0 && (
+        <div className="mt-2 flex flex-wrap justify-center gap-1">
+          {item.project.labels.map((label) => (
+            <span
+              key={label.id}
+              className="rounded-full border border-border px-2 py-0.5 text-[10px] text-muted"
+            >
+              {label.name}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {showTapHint ? (
+        <p className="mt-2 text-[10px] font-medium text-accent">
+          Tap to open project
+        </p>
+      ) : null}
+    </>
+  );
 }
 
 function addUtcMonths(date: Date, months: number): Date {
@@ -209,9 +281,13 @@ export function ProjectTimeline({
 }: ProjectTimelineProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const timelineContainerRef = useRef<HTMLDivElement>(null);
+  const overlayRef = useRef<HTMLAnchorElement>(null);
+  const lastPointerTypeRef = useRef<string>("mouse");
   const [containerWidth, setContainerWidth] = useState(0);
   const [zoomMultiplier, setZoomMultiplier] = useState(1);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [canHover, setCanHover] = useState(true);
+  const [tapPreview, setTapPreview] = useState(false);
   const [scrubX, setScrubX] = useState<number | null>(null);
 
   const { selectedSlugs, toggleLabel } = usePersistedLabelFilters({
@@ -263,6 +339,33 @@ export function ProjectTimeline({
   useEffect(() => {
     setZoomMultiplier(1);
   }, [timelineRangeKey]);
+
+  useEffect(() => {
+    const media = window.matchMedia("(hover: hover) and (pointer: fine)");
+    const update = () => setCanHover(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+
+  useEffect(() => {
+    if (!tapPreview || !hoveredId) return;
+
+    function dismissTapPreview(event: PointerEvent) {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (overlayRef.current?.contains(target)) return;
+      if (target instanceof Element && target.closest("[data-timeline-bubble]")) {
+        return;
+      }
+
+      setHoveredId(null);
+      setTapPreview(false);
+    }
+
+    document.addEventListener("pointerdown", dismissTapPreview);
+    return () => document.removeEventListener("pointerdown", dismissTapPreview);
+  }, [hoveredId, tapPreview]);
 
   const fitPxPerMonth = useMemo(() => {
     if (!timelineRange || containerWidth <= 0) return null;
@@ -347,6 +450,7 @@ export function ProjectTimeline({
 
   const hovered = layout?.positioned.find((item) => item.project.id === hoveredId);
   const hoveredCover = hovered ? getProjectCoverMedia(hovered.project) : undefined;
+  const overlayIsLink = tapPreview && Boolean(hovered);
   const playheadX = scrubX ?? hovered?.x ?? null;
   const playheadDate =
     scrubX !== null && timelineRange && pxPerMonth !== null
@@ -355,7 +459,23 @@ export function ProjectTimeline({
         ? projectDate(hovered.project)
         : null;
 
-  function updateScrub(event: PointerEvent<HTMLDivElement>) {
+  function showHoverPreview(projectId: string) {
+    if (!canHover) return;
+    setHoveredId(projectId);
+    setTapPreview(false);
+  }
+
+  function clearHoverPreview() {
+    if (tapPreview) return;
+    setHoveredId(null);
+  }
+
+  function showTapPreview(projectId: string) {
+    setHoveredId(projectId);
+    setTapPreview(true);
+  }
+
+  function updateScrub(event: ReactPointerEvent<HTMLDivElement>) {
     if (!layout) return;
 
     const rect = event.currentTarget.getBoundingClientRect();
@@ -416,7 +536,10 @@ export function ProjectTimeline({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted">
           {filteredEntries.length} project{filteredEntries.length === 1 ? "" : "s"} ·
-          {zoomMultiplier === 1 ? " fit to view" : " zoom adjusted"} · hover for dates and details
+          {zoomMultiplier === 1 ? " fit to view" : " zoom adjusted"} ·{" "}
+          {canHover
+            ? "hover for dates and details"
+            : "tap a bubble, then the card to open"}
         </p>
 
         <div className="flex items-center gap-2">
@@ -456,55 +579,33 @@ export function ProjectTimeline({
             </div>
           ) : (
             <div className="relative">
-              {hovered && (
-            <div
-              className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-3 w-64 -translate-x-1/2 rounded-xl border border-border bg-surface-elevated p-3 text-center shadow-xl shadow-black/30"
-              role="status"
-              aria-live="polite"
-            >
-              {hoveredCover?.type === "image" ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={hoveredCover.url}
-                  alt=""
-                  className="mx-auto mb-3 h-20 w-full max-w-[10rem] rounded-md bg-surface object-contain"
-                />
-              ) : null}
-
-              <p
-                className="text-[10px] font-medium uppercase tracking-[0.15em]"
-                style={{ color: hovered.sectionColor }}
-              >
-                {hovered.sectionTitle}
-              </p>
-              <h3 className="mt-1 text-sm font-medium">{hovered.project.title}</h3>
-              <p className="mt-1 text-xs text-muted">
-                {formatLogDate(hovered.project.createdAt)}
-              </p>
-
-              {hovered.project.description && (
-                <RichText
-                  content={hovered.project.description}
-                  className="mt-2 line-clamp-2 text-xs text-muted"
-                  linkSource="rich-text"
-                  linkContextId={hovered.project.id}
-                />
-              )}
-
-              {hovered.project.labels.length > 0 && (
-                <div className="mt-2 flex flex-wrap justify-center gap-1">
-                  {hovered.project.labels.map((label) => (
-                    <span
-                      key={label.id}
-                      className="rounded-full border border-border px-2 py-0.5 text-[10px] text-muted"
-                    >
-                      {label.name}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+              {hovered &&
+                (overlayIsLink ? (
+                  <Link
+                    ref={overlayRef}
+                    href={projectHref(hovered.project)}
+                    className={`${PREVIEW_CARD_CLASS_NAME} cursor-pointer`}
+                    aria-label={`Open ${hovered.project.title}`}
+                  >
+                    <TimelinePreviewCard
+                      item={hovered}
+                      cover={hoveredCover}
+                      showTapHint
+                    />
+                  </Link>
+                ) : (
+                  <div
+                    className={`${PREVIEW_CARD_CLASS_NAME} pointer-events-none`}
+                    role="status"
+                    aria-live="polite"
+                  >
+                    <TimelinePreviewCard
+                      item={hovered}
+                      cover={hoveredCover}
+                      showTapHint={false}
+                    />
+                  </div>
+                ))}
 
           <div
             ref={scrollContainerRef}
@@ -583,17 +684,29 @@ export function ProjectTimeline({
                   }}
                 >
                   <Link
-                    href={`/${item.project.section}/${item.project.slug}`}
+                    href={projectHref(item.project)}
                     aria-label={item.project.title}
-                    className="group block"
-                    onMouseEnter={() => setHoveredId(item.project.id)}
-                    onMouseLeave={() => setHoveredId(null)}
-                    onFocus={() => setHoveredId(item.project.id)}
-                    onBlur={() => setHoveredId(null)}
+                    data-timeline-bubble=""
+                    className="group flex items-center justify-center p-3 -m-3"
+                    onPointerDown={(event) => {
+                      lastPointerTypeRef.current = event.pointerType;
+                    }}
+                    onMouseEnter={() => showHoverPreview(item.project.id)}
+                    onMouseLeave={clearHoverPreview}
+                    onFocus={() => showHoverPreview(item.project.id)}
+                    onBlur={clearHoverPreview}
+                    onClick={(event) => {
+                      if (!canHover || isTapPointer(lastPointerTypeRef.current)) {
+                        event.preventDefault();
+                        showTapPreview(item.project.id);
+                      }
+                    }}
                   >
                     <div
-                      className={`rounded-full border-2 transition-transform group-hover:scale-125 ${
-                        isHovered ? "border-foreground" : "border-white/70"
+                      className={`rounded-full border-2 transition-transform ${
+                        isHovered
+                          ? "scale-125 border-foreground"
+                          : "border-white/70 group-hover:scale-125"
                       }`}
                       style={{
                         width: MARKER_SIZE,
