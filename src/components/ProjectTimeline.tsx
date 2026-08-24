@@ -1,7 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import { formatLogDate } from "@/lib/dates";
 import { usePersistedLabelFilters } from "@/hooks/usePersistedLabelFilters";
 import { projectMatchesLabels } from "@/lib/labelFilter";
@@ -40,10 +46,11 @@ type TimelineRange = {
 };
 
 const PADDING_MONTHS = 2;
-const LANE_HEIGHT = 52;
-const AXIS_HEIGHT = 72;
 const MARKER_SIZE = 14;
-const MIN_MARKER_GAP = 28;
+const MARKER_GAP = 6;
+const MIN_MARKER_GAP = MARKER_SIZE + MARKER_GAP;
+const LANE_HEIGHT = Math.ceil(MARKER_SIZE * 1.25) + MARKER_GAP;
+const AXIS_HEIGHT = 72;
 const TIMELINE_SIDE_PADDING = 48;
 const MIN_PX_PER_MONTH_FOR_MONTH_LABELS = 40;
 const ZOOM_STEP = 1.25;
@@ -61,6 +68,84 @@ function getLabelFontSize(count: number, maxCount: number): string {
 
 function projectDate(project: ProjectWithMedia): Date {
   return new Date(project.createdAt);
+}
+
+function projectHref(project: ProjectWithMedia): string {
+  return `/${project.section}/${project.slug}`;
+}
+
+function isTapPointer(pointerType: string | undefined): boolean {
+  return pointerType === "touch" || pointerType === "pen";
+}
+
+const PREVIEW_CARD_SURFACE_CLASS_NAME =
+  "w-64 max-w-[calc(100vw-2rem)] rounded-xl border border-border bg-surface-elevated p-3 text-center shadow-xl shadow-black/30";
+
+const PREVIEW_CARD_CLASS_NAME =
+  `absolute bottom-full left-1/2 z-20 mb-3 -translate-x-1/2 ${PREVIEW_CARD_SURFACE_CLASS_NAME}`;
+
+const TAP_PREVIEW_CARD_CLASS_NAME =
+  `fixed left-1/2 top-1/2 z-[60] -translate-x-1/2 -translate-y-1/2 ${PREVIEW_CARD_SURFACE_CLASS_NAME}`;
+
+function TimelinePreviewCard({
+  item,
+  cover,
+  showTapHint,
+}: {
+  item: PositionedEntry;
+  cover?: ReturnType<typeof getProjectCoverMedia>;
+  showTapHint: boolean;
+}) {
+  return (
+    <>
+      {cover?.type === "image" ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={cover.url}
+          alt=""
+          className="mx-auto mb-3 h-20 w-full max-w-[10rem] rounded-md bg-surface object-contain"
+        />
+      ) : null}
+
+      <p
+        className="text-[10px] font-medium uppercase tracking-[0.15em]"
+        style={{ color: item.sectionColor }}
+      >
+        {item.sectionTitle}
+      </p>
+      <h3 className="mt-1 text-sm font-medium">{item.project.title}</h3>
+      <p className="mt-1 text-xs text-muted">
+        {formatLogDate(item.project.createdAt)}
+      </p>
+
+      {item.project.description && (
+        <RichText
+          content={item.project.description}
+          className="mt-2 line-clamp-2 text-xs text-muted"
+          interactive={false}
+        />
+      )}
+
+      {item.project.labels.length > 0 && (
+        <div className="mt-2 flex flex-wrap justify-center gap-1">
+          {item.project.labels.map((label) => (
+            <span
+              key={label.id}
+              className="rounded-full border border-border px-2 py-0.5 text-[10px] text-muted"
+            >
+              {label.name}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {showTapHint ? (
+        <p className="mt-2 text-[10px] font-medium text-accent">
+          Tap to open project
+        </p>
+      ) : null}
+    </>
+  );
 }
 
 function addUtcMonths(date: Date, months: number): Date {
@@ -102,6 +187,31 @@ function dateToX(date: Date, start: Date, pxPerMonth: number): number {
   return (months + dayFraction) * pxPerMonth;
 }
 
+function xToDate(x: number, start: Date, pxPerMonth: number): Date {
+  const monthFloat = Math.max(0, (x - TIMELINE_SIDE_PADDING) / pxPerMonth);
+  const wholeMonths = Math.floor(monthFloat);
+  const dayFraction = monthFloat - wholeMonths;
+  const date = addUtcMonths(start, wholeMonths);
+  const daysInMonth = new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0)
+  ).getUTCDate();
+  const day = Math.min(
+    daysInMonth,
+    Math.max(1, Math.round(dayFraction * 31) + 1)
+  );
+  date.setUTCDate(day);
+  return date;
+}
+
+function formatScrubDate(date: Date): string {
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
 function assignLanes(items: { entry: TimelineEntry; x: number }[]): PositionedEntry[] {
   const sorted = [...items].sort((a, b) => a.x - b.x);
   const laneEnds: number[] = [];
@@ -109,6 +219,7 @@ function assignLanes(items: { entry: TimelineEntry; x: number }[]): PositionedEn
   return sorted.map((item) => {
     let lane = 0;
 
+    // If this bubble would collide with one already in the lane, stack it underneath.
     while (laneEnds[lane] !== undefined && item.x - laneEnds[lane] < MIN_MARKER_GAP) {
       lane += 1;
     }
@@ -176,9 +287,14 @@ export function ProjectTimeline({
 }: ProjectTimelineProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const timelineContainerRef = useRef<HTMLDivElement>(null);
+  const overlayRef = useRef<HTMLAnchorElement>(null);
+  const lastPointerTypeRef = useRef<string>("mouse");
   const [containerWidth, setContainerWidth] = useState(0);
   const [zoomMultiplier, setZoomMultiplier] = useState(1);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [canHover, setCanHover] = useState(true);
+  const [tapPreview, setTapPreview] = useState(false);
+  const [scrubX, setScrubX] = useState<number | null>(null);
 
   const { selectedSlugs, toggleLabel } = usePersistedLabelFilters({
     scope: "timeline",
@@ -229,6 +345,33 @@ export function ProjectTimeline({
   useEffect(() => {
     setZoomMultiplier(1);
   }, [timelineRangeKey]);
+
+  useEffect(() => {
+    const media = window.matchMedia("(hover: hover) and (pointer: fine)");
+    const update = () => setCanHover(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+
+  useEffect(() => {
+    if (!tapPreview || !hoveredId) return;
+
+    function dismissTapPreview(event: PointerEvent) {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (overlayRef.current?.contains(target)) return;
+      if (target instanceof Element && target.closest("[data-timeline-bubble]")) {
+        return;
+      }
+
+      setHoveredId(null);
+      setTapPreview(false);
+    }
+
+    document.addEventListener("pointerdown", dismissTapPreview);
+    return () => document.removeEventListener("pointerdown", dismissTapPreview);
+  }, [hoveredId, tapPreview]);
 
   const fitPxPerMonth = useMemo(() => {
     if (!timelineRange || containerWidth <= 0) return null;
@@ -291,8 +434,9 @@ export function ProjectTimeline({
       positioned,
       maxLane,
       totalWidth,
+      contentWidth,
       ticks,
-      contentHeight: AXIS_HEIGHT + (maxLane + 1) * LANE_HEIGHT + 48,
+      contentHeight: AXIS_HEIGHT + (maxLane + 1) * LANE_HEIGHT + 32,
     };
   }, [containerWidth, filteredEntries, pxPerMonth, timelineRange]);
 
@@ -312,6 +456,40 @@ export function ProjectTimeline({
 
   const hovered = layout?.positioned.find((item) => item.project.id === hoveredId);
   const hoveredCover = hovered ? getProjectCoverMedia(hovered.project) : undefined;
+  const overlayIsLink = tapPreview && Boolean(hovered);
+  const playheadX = scrubX ?? hovered?.x ?? null;
+  const playheadDate =
+    scrubX !== null && timelineRange && pxPerMonth !== null
+      ? xToDate(scrubX, timelineRange.start, pxPerMonth)
+      : hovered
+        ? projectDate(hovered.project)
+        : null;
+
+  function showHoverPreview(projectId: string) {
+    if (!canHover) return;
+    setHoveredId(projectId);
+    setTapPreview(false);
+  }
+
+  function clearHoverPreview() {
+    if (tapPreview) return;
+    setHoveredId(null);
+  }
+
+  function showTapPreview(projectId: string) {
+    setHoveredId(projectId);
+    setTapPreview(true);
+  }
+
+  function updateScrub(event: ReactPointerEvent<HTMLDivElement>) {
+    if (!layout) return;
+
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const minX = TIMELINE_SIDE_PADDING;
+    const maxX = layout.contentWidth - TIMELINE_SIDE_PADDING;
+    setScrubX(Math.min(maxX, Math.max(minX, x)));
+  }
 
   return (
     <div className="space-y-6">
@@ -364,7 +542,10 @@ export function ProjectTimeline({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted">
           {filteredEntries.length} project{filteredEntries.length === 1 ? "" : "s"} ·
-          {zoomMultiplier === 1 ? " fit to view" : " zoom adjusted"} · hover for details
+          {zoomMultiplier === 1 ? " fit to view" : " zoom adjusted"} ·{" "}
+          {canHover
+            ? "hover for dates and details"
+            : "tap a bubble, then the card to open"}
         </p>
 
         <div className="flex items-center gap-2">
@@ -404,55 +585,33 @@ export function ProjectTimeline({
             </div>
           ) : (
             <div className="relative">
-              {hovered && (
-            <div
-              className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-3 w-64 -translate-x-1/2 rounded-xl border border-border bg-surface-elevated p-3 text-center shadow-xl shadow-black/30"
-              role="status"
-              aria-live="polite"
-            >
-              {hoveredCover?.type === "image" ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={hoveredCover.url}
-                  alt=""
-                  className="mx-auto mb-3 h-20 w-full max-w-[10rem] rounded-md bg-surface object-contain"
-                />
-              ) : null}
-
-              <p
-                className="text-[10px] font-medium uppercase tracking-[0.15em]"
-                style={{ color: hovered.sectionColor }}
-              >
-                {hovered.sectionTitle}
-              </p>
-              <h3 className="mt-1 text-sm font-medium">{hovered.project.title}</h3>
-              <p className="mt-1 text-xs text-muted">
-                {formatLogDate(hovered.project.createdAt)}
-              </p>
-
-              {hovered.project.description && (
-                <RichText
-                  content={hovered.project.description}
-                  className="mt-2 line-clamp-2 text-xs text-muted"
-                  linkSource="rich-text"
-                  linkContextId={hovered.project.id}
-                />
-              )}
-
-              {hovered.project.labels.length > 0 && (
-                <div className="mt-2 flex flex-wrap justify-center gap-1">
-                  {hovered.project.labels.map((label) => (
-                    <span
-                      key={label.id}
-                      className="rounded-full border border-border px-2 py-0.5 text-[10px] text-muted"
-                    >
-                      {label.name}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+              {hovered &&
+                (overlayIsLink ? (
+                  <Link
+                    ref={overlayRef}
+                    href={projectHref(hovered.project)}
+                    className={`${TAP_PREVIEW_CARD_CLASS_NAME} cursor-pointer`}
+                    aria-label={`Open ${hovered.project.title}`}
+                  >
+                    <TimelinePreviewCard
+                      item={hovered}
+                      cover={hoveredCover}
+                      showTapHint
+                    />
+                  </Link>
+                ) : (
+                  <div
+                    className={`${PREVIEW_CARD_CLASS_NAME} pointer-events-none`}
+                    role="status"
+                    aria-live="polite"
+                  >
+                    <TimelinePreviewCard
+                      item={hovered}
+                      cover={hoveredCover}
+                      showTapHint={false}
+                    />
+                  </div>
+                ))}
 
           <div
             ref={scrollContainerRef}
@@ -461,6 +620,10 @@ export function ProjectTimeline({
           <div
             className="relative"
             style={{ width: layout.totalWidth, height: layout.contentHeight }}
+            onPointerEnter={updateScrub}
+            onPointerMove={updateScrub}
+            onPointerLeave={() => setScrubX(null)}
+            onPointerCancel={() => setScrubX(null)}
           >
             <div
               className="absolute inset-x-0 top-0 border-b border-border bg-surface-elevated"
@@ -495,29 +658,61 @@ export function ProjectTimeline({
                   )}
                 </div>
               ))}
+
+              {playheadX !== null && playheadDate && (
+                <div
+                  className="pointer-events-none absolute bottom-0 z-20 flex flex-col items-center"
+                  style={{ left: playheadX, transform: "translateX(-50%)" }}
+                  aria-hidden
+                >
+                  <span className="mb-1 whitespace-nowrap rounded-md bg-background px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-foreground shadow-sm ring-1 ring-accent/50">
+                    {formatScrubDate(playheadDate)}
+                  </span>
+                  <div className="h-7 w-0.5 rounded-full bg-accent" />
+                  <div className="h-1.5 w-1.5 rounded-full bg-accent" />
+                </div>
+              )}
             </div>
 
             {layout.positioned.map((item) => {
-              const top = AXIS_HEIGHT + 24 + item.lane * LANE_HEIGHT;
+              const top = AXIS_HEIGHT + 16 + item.lane * LANE_HEIGHT;
               const isHovered = hoveredId === item.project.id;
 
               return (
                 <div
                   key={item.project.id}
                   className="absolute"
-                  style={{ left: item.x, top, transform: "translateX(-50%)" }}
+                  style={{
+                    left: item.x,
+                    top,
+                    transform: "translateX(-50%)",
+                    zIndex: isHovered ? 10 : 1,
+                  }}
                 >
                   <Link
-                    href={`/${item.project.section}/${item.project.slug}`}
-                    className="group block"
-                    onMouseEnter={() => setHoveredId(item.project.id)}
-                    onMouseLeave={() => setHoveredId(null)}
-                    onFocus={() => setHoveredId(item.project.id)}
-                    onBlur={() => setHoveredId(null)}
+                    href={projectHref(item.project)}
+                    aria-label={item.project.title}
+                    data-timeline-bubble=""
+                    className="group flex items-center justify-center p-3 -m-3"
+                    onPointerDown={(event) => {
+                      lastPointerTypeRef.current = event.pointerType;
+                    }}
+                    onMouseEnter={() => showHoverPreview(item.project.id)}
+                    onMouseLeave={clearHoverPreview}
+                    onFocus={() => showHoverPreview(item.project.id)}
+                    onBlur={clearHoverPreview}
+                    onClick={(event) => {
+                      if (!canHover || isTapPointer(lastPointerTypeRef.current)) {
+                        event.preventDefault();
+                        showTapPreview(item.project.id);
+                      }
+                    }}
                   >
                     <div
-                      className={`rounded-full border-2 transition-transform group-hover:scale-125 ${
-                        isHovered ? "border-foreground" : "border-white/70"
+                      className={`rounded-full border-2 transition-transform ${
+                        isHovered
+                          ? "scale-125 border-foreground"
+                          : "border-white/70 group-hover:scale-125"
                       }`}
                       style={{
                         width: MARKER_SIZE,
@@ -525,11 +720,7 @@ export function ProjectTimeline({
                         backgroundColor: item.sectionColor,
                         boxShadow: `0 4px 14px ${item.sectionColor}66`,
                       }}
-                      aria-label={item.project.title}
                     />
-                    <span className="pointer-events-none absolute left-1/2 top-5 w-max max-w-40 -translate-x-1/2 truncate text-center text-xs text-muted group-hover:text-foreground">
-                      {item.project.title}
-                    </span>
                   </Link>
                 </div>
               );

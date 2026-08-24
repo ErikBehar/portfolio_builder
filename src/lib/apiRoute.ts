@@ -3,7 +3,13 @@ import { ApiError } from "@/lib/apiErrors";
 
 export function handleApiError(error: unknown) {
   if (error instanceof ApiError) {
-    return NextResponse.json({ error: error.message }, { status: error.status });
+    return NextResponse.json(
+      {
+        error: error.message,
+        ...(error.extra ?? {}),
+      },
+      { status: error.status }
+    );
   }
 
   console.error(error);

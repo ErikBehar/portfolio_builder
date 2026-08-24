@@ -28,7 +28,8 @@ export default async function AdminCommentsPage({
         <h1 className="text-3xl font-semibold tracking-tight">Comments</h1>
         <p className="mt-2 max-w-2xl text-muted">
           Review comments left on log entries and projects. Unread items stay
-          marked until you mark them as seen.
+          marked until you mark them as seen. Delete a comment to remove it
+          from the site.
           {unreadCount > 0
             ? ` You have ${unreadCount} unread comment${unreadCount === 1 ? "" : "s"}.`
             : ""}

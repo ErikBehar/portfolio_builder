@@ -109,6 +109,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
         initialComments={project.comments ?? []}
         commentsEnabled={siteSettings.projectCommentsEnabled}
         commentsVisible={siteSettings.projectCommentsVisible}
+        captchaEnabled={siteSettings.commentCaptchaEnabled}
       />
 
       <p className="mt-10 text-sm text-muted">
