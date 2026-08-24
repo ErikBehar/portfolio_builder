@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { HomeSectionHeading } from "@/components/HomeSectionHeading";
+import { RichText } from "@/components/RichText";
 import { inlineLinkClassName } from "@/lib/linkStyles";
 import type { LogEntryWithMedia } from "@/lib/types";
 import { formatLogDate } from "@/lib/dates";
-import { excerptRichText } from "@/lib/richText";
 
 type LogEntryPreviewProps = {
   entry: LogEntryWithMedia;
@@ -60,9 +60,13 @@ export function LogEntryPreview({ entry, headerColor }: LogEntryPreviewProps) {
           </div>
         )}
 
-        <p className="whitespace-pre-wrap leading-relaxed text-muted">
-          {excerptRichText(entry.content)}
-        </p>
+        <RichText
+          content={entry.content}
+          className="mb-4 text-muted"
+          maxLength={280}
+          linkSource="log-content"
+          linkContextId={entry.id}
+        />
 
         <Link
           href={`/log/${entry.slug}`}

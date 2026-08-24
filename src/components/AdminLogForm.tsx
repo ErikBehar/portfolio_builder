@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { DatePicker } from "@/components/DatePicker";
-import { RichTextFieldHint } from "@/components/RichTextFieldHint";
+import { RichTextEditor } from "@/components/RichTextEditor";
 import { todayInputValue, toDateInputValue } from "@/lib/dates";
 import { uploadMediaFiles, type MediaDraft } from "@/lib/clientUpload";
 import { setAdminFlash } from "@/lib/adminFlash";
@@ -124,18 +124,16 @@ export function AdminLogForm({ entry }: AdminLogFormProps) {
         />
       </div>
 
-      <label className="block space-y-2">
+      <div className="space-y-2">
         <span className="text-sm font-medium">Content</span>
-        <textarea
+        <RichTextEditor
           required
           value={content}
-          onChange={(event) => setContent(event.target.value)}
+          onChange={setContent}
           rows={12}
-          className="w-full rounded-lg border border-border bg-surface px-3 py-2 font-mono text-sm"
           placeholder="Write your log entry..."
         />
-        <RichTextFieldHint />
-      </label>
+      </div>
 
       <div className="space-y-4">
         <h3 className="text-sm font-medium">Media carousel</h3>

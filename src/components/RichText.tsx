@@ -1,5 +1,6 @@
+import type { ReactNode } from "react";
 import { staticLinkClassName } from "@/lib/linkStyles";
-import { parseRichText } from "@/lib/richText";
+import { excerptRichTextParts, parseRichText } from "@/lib/richText";
 import { RichTextLink } from "@/components/RichTextLink";
 import type { LinkSource } from "@/lib/statsTypes";
 
@@ -8,6 +9,7 @@ type RichTextProps = {
   className?: string;
   fallback?: string;
   interactive?: boolean;
+  maxLength?: number;
   linkSource?: LinkSource;
   linkContextId?: string | null;
 };
@@ -17,6 +19,7 @@ export function RichText({
   className = "",
   fallback,
   interactive = true,
+  maxLength,
   linkSource,
   linkContextId,
 }: RichTextProps) {
@@ -27,7 +30,10 @@ export function RichText({
     return <p className={className}>{fallback}</p>;
   }
 
-  const parts = parseRichText(value);
+  const parts =
+    maxLength === undefined
+      ? parseRichText(value)
+      : excerptRichTextParts(value, maxLength);
 
   return (
     <div
@@ -35,7 +41,26 @@ export function RichText({
     >
       {parts.map((part, index) => {
         if (part.type === "text") {
-          return <span key={index}>{part.value}</span>;
+          let node: ReactNode = part.value;
+          if (part.italic) node = <em>{node}</em>;
+          if (part.bold) node = <strong>{node}</strong>;
+          return <span key={index}>{node}</span>;
+        }
+
+        if (part.type === "image") {
+          if (!interactive || maxLength !== undefined) {
+            return part.alt ? <span key={index}>{part.alt}</span> : null;
+          }
+
+          return (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              key={index}
+              src={part.src}
+              alt={part.alt}
+              className="my-3 block max-h-[36rem] w-full rounded-lg border border-border bg-surface-elevated object-contain"
+            />
+          );
         }
 
         if (!interactive) {

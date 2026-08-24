@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { DatePicker } from "@/components/DatePicker";
-import { RichTextFieldHint } from "@/components/RichTextFieldHint";
+import { RichTextEditor } from "@/components/RichTextEditor";
 import { toDateInputValue, todayInputValue } from "@/lib/dates";
 import { uploadMediaFiles, type MediaDraft } from "@/lib/clientUpload";
 import { getDefaultPreviewMediaIndex } from "@/lib/media";
@@ -280,17 +280,15 @@ export function AdminProjectForm({
         )}
       </div>
 
-      <label className="block space-y-2">
+      <div className="space-y-2">
         <span className="text-sm font-medium">Description</span>
-        <textarea
+        <RichTextEditor
           value={description}
-          onChange={(event) => setDescription(event.target.value)}
+          onChange={setDescription}
           rows={6}
-          className="w-full rounded-lg border border-border bg-surface px-3 py-2 font-mono text-sm"
           placeholder="Optional project description"
         />
-        <RichTextFieldHint />
-      </label>
+      </div>
 
       <div className="space-y-3">
         <h3 className="text-sm font-medium">Labels</h3>
