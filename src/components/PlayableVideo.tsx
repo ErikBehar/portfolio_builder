@@ -35,20 +35,21 @@ export function PlayableVideo({
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
+    const element = video;
 
     function sync() {
-      setPaused(video.paused);
+      setPaused(element.paused);
     }
 
     sync();
-    video.addEventListener("play", sync);
-    video.addEventListener("pause", sync);
-    video.addEventListener("ended", sync);
+    element.addEventListener("play", sync);
+    element.addEventListener("pause", sync);
+    element.addEventListener("ended", sync);
 
     return () => {
-      video.removeEventListener("play", sync);
-      video.removeEventListener("pause", sync);
-      video.removeEventListener("ended", sync);
+      element.removeEventListener("play", sync);
+      element.removeEventListener("pause", sync);
+      element.removeEventListener("ended", sync);
     };
   }, [src]);
 
