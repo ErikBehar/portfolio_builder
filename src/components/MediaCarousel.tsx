@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ImageLightbox } from "@/components/ImageLightbox";
+import { PlayableVideo } from "@/components/PlayableVideo";
 import type { MediaItem } from "@/lib/types";
 
 type MediaCarouselProps = {
@@ -95,11 +96,11 @@ export function MediaCarousel({ media }: MediaCarouselProps) {
               className="h-full w-full object-contain"
             />
           ) : (
-            <video
+            <PlayableVideo
               key={current.url}
               src={current.url}
-              controls
-              className="h-full w-full bg-black object-contain"
+              className="h-full w-full"
+              videoClassName="h-full w-full bg-black object-contain"
             />
           )}
 

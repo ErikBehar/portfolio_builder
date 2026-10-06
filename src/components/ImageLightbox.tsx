@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { PlayableVideo } from "@/components/PlayableVideo";
 import type { MediaItem } from "@/lib/types";
 
 type ImageLightboxProps = {
@@ -149,12 +150,11 @@ export function ImageLightbox({
             className="max-h-[calc(100vh-6rem)] max-w-full object-contain"
           />
         ) : (
-          <video
+          <PlayableVideo
             key={current.url}
             src={current.url}
-            controls
             autoPlay
-            className="max-h-[calc(100vh-6rem)] max-w-full bg-black object-contain"
+            videoClassName="max-h-[calc(100vh-6rem)] max-w-full bg-black object-contain"
           />
         )}
 
